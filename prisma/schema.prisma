@@ -1,0 +1,35 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model files {
+  file_id       Int       @id @default(autoincrement())
+  file_name     String    @unique
+  file_path     String
+  file_hash     String
+  file_primary  Boolean
+
+  created_at    DateTime
+  modified_at   DateTime
+
+  photo         photos    @relation(fields: [photo_id], references: [photo_id])
+  photo_id      Int       @unique
+}
+
+model photos {
+  photo_id      Int       @id @default(autoincrement())
+  photo_width   Int
+  photo_height  Int
+  photo_type    String
+  photo_name    String
+  photo_author  String
+  photo_domain  String
+  photo_source  String
+
+  created_at    DateTime
+  added_at      DateTime
+  modified_at   DateTime
+
+  file          files[]
+}

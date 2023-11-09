@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "remix build",
-    "dev": "remix dev --manual",
+    "dev": "dotenv -e .env.development.local -- remix dev --manual",
+    "migrate": "dotenv -e .env.development.local -- npx prisma migrate dev",
+    "prototype": "dotenv -e .env.development.local -- npx prisma db push",
     "start": "remix-serve ./build/index.js",
     "typecheck": "tsc"
   },
@@ -15,6 +17,7 @@
     "@remix-run/react": "^2.2.0",
     "@remix-run/serve": "^2.2.0",
     "isbot": "^3.6.8",
+    "prisma": "^5.5.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -23,6 +26,7 @@
     "@remix-run/eslint-config": "^2.2.0",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "dotenv-cli": "^7.3.0",
     "eslint": "^8.38.0",
     "typescript": "^5.1.6"
   },

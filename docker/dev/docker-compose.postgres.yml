@@ -1,0 +1,14 @@
+version: '3.5'
+
+## FOR TEST AND DEVELOPMENT ONLY, DO NOT USE IN PRODUCTION   ##
+## Setup: https://docs.photoprism.app/developer-guide/setup/ ##
+
+services:
+  postgres:
+    image: postgres:12-alpine
+    ports:
+      - "5432:5432" # database port (host:container)
+    environment:
+      POSTGRES_DB: colbalt
+      POSTGRES_USER: colbalt
+      POSTGRES_PASSWORD: colbalt
