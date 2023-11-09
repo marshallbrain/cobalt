@@ -8,8 +8,9 @@ import {
     Scripts,
     ScrollRestoration,
 } from "@remix-run/react";
-import {ThemeProvider, createTheme, CssBaseline} from "@mui/material";
-import React from "react";
+import {ThemeProvider, createTheme, CssBaseline, Box} from "@mui/material";
+import React, {useState} from "react";
+import MenuBar from "~/components/MenuBar";
 
 export const links: LinksFunction = () => [
     ...(cssBundleHref ? [{rel: "stylesheet", href: cssBundleHref}] : []),
@@ -21,7 +22,12 @@ const ThemeContext = React.createContext({
 })
 
 export default function App() {
-    const [mode, setMode] = React.useState<'light' | 'dark'>('dark')
+    const [mode, setMode] = useState<'light' | 'dark'>('dark')
+    const [drawer, setDrawer] = useState(false)
+
+    const toggleDrawer = () => {
+        setDrawer(!drawer)
+    }
 
     const colorMode = React.useMemo(
         () => ({
@@ -54,7 +60,15 @@ export default function App() {
         <ThemeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
                 <CssBaseline/>
-                <Outlet/>
+                <MenuBar open={drawer} toggle={toggleDrawer}/>
+                <Box
+                    sx={{
+                        width: {sm: `calc(100% - ${drawer? "240px": theme.spacing(7)})`},
+                        ml: {sm: `${drawer? "240px": theme.spacing(7)}`},
+                    }}
+                >
+                    <Outlet/>
+                </Box>
             </ThemeProvider>
         </ThemeContext.Provider>
         <ScrollRestoration/>
