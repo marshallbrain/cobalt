@@ -1,18 +1,23 @@
 import React from 'react';
 import {ListItem, ListItemButton, ListItemIcon, ListItemText} from "@mui/material";
+import {Link, useLocation} from "@remix-run/react";
 
 const DrawerItem = (props: PropTypes) => {
 
-    const {text} = props
+    const {text, url} = props
+    const location = useLocation()
 
     return (
         <ListItem disablePadding sx={{ display: 'block'}}>
             <ListItemButton
+                to={url}
                 sx={{
                     minHeight: 48,
                     px: 2.5,
                     paddingX: 2
                 }}
+                component={Link}
+                selected={location.pathname.startsWith(url)}
             >
                 <ListItemIcon
                     sx={{
@@ -30,7 +35,8 @@ const DrawerItem = (props: PropTypes) => {
 }
 
 interface PropTypes {
-    text: String
+    text: string
+    url: string
     children: React.ReactNode
 }
 
