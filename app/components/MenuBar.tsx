@@ -1,11 +1,11 @@
-import React, {useState} from 'react';
+import React from 'react';
 import type { CSSObject, Theme} from "@mui/material";
 import {Box, IconButton, styled, Drawer, List, Divider} from "@mui/material";
 import ChevronLeftRounded from "~/components/icons/ChevronLeftRounded";
 import DrawerItem from "~/components/DrawerItem";
 import InsertPhotoRounded from "~/components/icons/InsertPhotoRounded";
 import SettingsRounded from "~/components/icons/SettingsRounded";
-import {useMatches} from "react-router";
+import SyncRounded from "~/components/icons/SyncRounded";
 
 const drawerWidth = 240;
 
@@ -55,9 +55,6 @@ const MenuBar = (props: PropTypes) => {
 
     const {open, toggle} = props
 
-    // const matches = useMatches();
-    // console.log(matches)
-
     return (
         <Box sx={{ display: 'flex' }}>
             <MiniDrawer
@@ -70,6 +67,9 @@ const MenuBar = (props: PropTypes) => {
                 <List>
                     <DrawerItem text={"Gallery"} url={"/gallery"}>
                         <InsertPhotoRounded/>
+                    </DrawerItem>
+                    <DrawerItem text={"Sync"} url={"/sync"}>
+                        <SyncRounded/>
                     </DrawerItem>
                     <DrawerItem text={"Settings"} url={"/settings"}>
                         <SettingsRounded/>
