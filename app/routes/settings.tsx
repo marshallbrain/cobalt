@@ -5,6 +5,7 @@ import {Link, Outlet, useLocation} from "@remix-run/react";
 import {json} from "@remix-run/node";
 import {db} from "~/db/database.server";
 import {validateSettings} from "~/validators/settings";
+import TabLinks from "~/components/TabLinks";
 
 export const meta: MetaFunction = () => {
     return [
@@ -13,26 +14,14 @@ export const meta: MetaFunction = () => {
 }
 
 const tabs = [
-    {label: "General", link: "/settings/general"}
+    {label: "General"}
 ]
 
 export default function Settings() {
 
-    const location = useLocation()
-
     return (
         <>
-            <Tabs value={location.pathname}>
-                {tabs.map((tab) => (
-                    <Tab
-                        key={tab.label}
-                        label={tab.label}
-                        value={tab.link}
-                        to={tab.link}
-                        component={Link}
-                    />
-                ))}
-            </Tabs>
+            <TabLinks tabs={tabs} parent={"/settings"}/>
             <Outlet/>
         </>
     )
