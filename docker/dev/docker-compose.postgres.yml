@@ -9,6 +9,6 @@ services:
     ports:
       - "5432:5432" # database port (host:container)
     environment:
-      POSTGRES_DB: colbalt
-      POSTGRES_USER: colbalt
-      POSTGRES_PASSWORD: colbalt
+      POSTGRES_DB: cobalt
+      POSTGRES_USER: cobalt
+      POSTGRES_PASSWORD: cobalt

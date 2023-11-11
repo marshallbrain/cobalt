@@ -20,13 +20,17 @@
     "@remix-run/react": "^2.2.0",
     "@remix-run/serve": "^2.2.0",
     "isbot": "^3.6.8",
+    "kysely": "^0.26.3",
+    "pg": "^8.11.3",
     "prisma": "^5.5.2",
+    "prisma-kysely": "^1.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.2.0",
     "@remix-run/eslint-config": "^2.2.0",
+    "@types/pg": "^8.10.9",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "dotenv-cli": "^7.3.0",
