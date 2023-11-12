@@ -1,4 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
+import {redirect} from "@remix-run/node";
 
 export const meta: MetaFunction = () => {
   return [
@@ -7,9 +8,6 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export default function Index() {
-  return (
-      <div>
-      </div>
-  )
+export async function loader() {
+  return redirect("/gallery")
 }
