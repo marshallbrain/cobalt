@@ -33,7 +33,7 @@ interface JsonData {
     createDate?: string
 }
 
-interface Metadata {
+export interface Metadata {
     photo_name: string
     photo_author: string
     photo_rating: string
