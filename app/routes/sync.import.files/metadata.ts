@@ -1,16 +1,16 @@
 import * as fs from "fs/promises";
 import path from "path";
 
-export async function getMetadataFile(photoFile: string, photoPath: string) {
+export async function getMetadataStats(photoFile: string, photoPath: string) {
     const dataFile = photoFile.concat(".json")
     const fallback = photoFile.replace(path.extname(photoFile), "")
 
-    return await fs.readFile(path.join(photoPath, dataFile), {encoding: 'utf8'})
-            .then((metadata) => ({metadata, file: dataFile}))
+    return await fs.stat(path.join(photoPath, dataFile))
+            .then((stats) => ({dataStats: stats, dataFile: dataFile}))
             .catch(() => null) ??
-        fs.readFile(path.join(photoPath, fallback), {encoding: 'utf8'})
-            .then((metadata) => ({metadata, file: fallback}))
-            .catch(() => null)
+        fs.stat(path.join(photoPath, fallback))
+            .then((stats) => ({dataStats: stats, dataFile: fallback}))
+            .catch(() => ({dataStats: undefined, dataFile: undefined}))
 }
 
 export function validateMetadataJson(json: JsonData, titleFallback: string): Metadata {
@@ -24,7 +24,7 @@ export function validateMetadataJson(json: JsonData, titleFallback: string): Met
     }
 }
 
-interface JsonData {
+export interface JsonData {
     title?: string
     artist?: string
     rating?: string
