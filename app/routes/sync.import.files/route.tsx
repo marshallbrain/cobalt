@@ -5,7 +5,7 @@ import {json} from "@remix-run/node";
 import {readdir} from "fs/promises";
 import path from "path";
 import {originals} from "~/utils/utilities";
-import { interval } from "remix-utils/timers";
+import importPhoto, {isPhoto} from "~/routes/sync.import.files/photos";
 
 const importLogger = new EventEmitter()
 
@@ -29,14 +29,21 @@ export async function action({
     const folder = Object.fromEntries(await request.formData()).folder as string
 
     if (!originals) json({ok: false})
-    readdir(path.join(originals ?? "", folder), {withFileTypes: true}).then(files => {
-        files = files.filter(file => file.isFile())
+    readdir(path.join(originals ?? "", folder), {withFileTypes: true}).then(async files => {
+        files = files.filter(file => file.isFile() && isPhoto(file.name))
         const total = files.length
-        const timer = setInterval(() => {
-            const progress = (total - files.length + 1) / total
-            importLogger.emit("progress", files.pop(), Math.floor(progress * 100))
-            if (files.length == 0) clearInterval(timer)
-        }, 500)
+        let i = 0
+        for (const file of files) {
+            await importPhoto(file.name, file.path)
+            const progress = (++i) / total
+            importLogger.emit("progress", file, Math.floor(progress * 100))
+        }
+
+        // const timer = setInterval(() => {
+        //     const progress = (total - files.length + 1) / total
+        //     importLogger.emit("progress", files.pop(), Math.floor(progress * 100))
+        //     if (files.length == 0) clearInterval(timer)
+        // }, 500)
     })
 
     return json({ok: true})

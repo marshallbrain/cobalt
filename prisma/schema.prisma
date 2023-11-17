@@ -14,7 +14,9 @@ model files {
   modified_at   DateTime
 
   photo         photos    @relation(fields: [photo_id], references: [photo_id])
-  photo_id      Int       @unique
+  photo_id      Int
+
+  @@unique([photo_id, file_primary])
 
   // @@map("files")
 }
@@ -26,12 +28,13 @@ model photos {
   photo_type    String
   photo_name    String
   photo_author  String
+  photo_rating  String
   photo_domain  String
   photo_source  String
 
   created_at    DateTime
-  added_at      DateTime
-  modified_at   DateTime
+  added_at      DateTime  @default(now())
+  modified_at   DateTime  @default(now())
 
   file          files[]
 }
@@ -46,5 +49,4 @@ generator kysely {
 
   output = "../app/db"
   fileName = "types.ts"
-  camelCase = true
 }

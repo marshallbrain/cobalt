@@ -5,27 +5,28 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export type files = {
-    fileId: Generated<number>;
-    fileName: string;
-    filePath: string;
-    fileHash: string;
-    filePrimary: boolean;
-    createdAt: Timestamp;
-    modifiedAt: Timestamp;
-    photoId: number;
+    file_id: Generated<number>;
+    file_name: string;
+    file_path: string;
+    file_hash: string;
+    file_primary: boolean;
+    created_at: Timestamp;
+    modified_at: Timestamp;
+    photo_id: number;
 };
 export type photos = {
-    photoId: Generated<number>;
-    photoWidth: number;
-    photoHeight: number;
-    photoType: string;
-    photoName: string;
-    photoAuthor: string;
-    photoDomain: string;
-    photoSource: string;
-    createdAt: Timestamp;
-    addedAt: Timestamp;
-    modifiedAt: Timestamp;
+    photo_id: Generated<number>;
+    photo_width: number;
+    photo_height: number;
+    photo_type: string;
+    photo_name: string;
+    photo_author: string;
+    photo_rating: string;
+    photo_domain: string;
+    photo_source: string;
+    created_at: Timestamp;
+    added_at: Generated<Timestamp>;
+    modified_at: Generated<Timestamp>;
 };
 export type settings = {
     id: Generated<number>;
