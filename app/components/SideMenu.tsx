@@ -7,6 +7,7 @@ import InsertPhotoRounded from "~/components/icons/InsertPhotoRounded";
 import SettingsRounded from "~/components/icons/SettingsRounded";
 import SyncRounded from "~/components/icons/SyncRounded";
 import ChevronRightRounded from "~/components/icons/ChevronRightRounded";
+import DrawerParentItem from "~/components/DrawerParentItem";
 
 const DrawerHeader = styled("div")(({ theme }) => ({
     display: 'flex',
@@ -38,15 +39,14 @@ const SideMenu = (props: PropTypes) => {
                 alignItems: "stretch"
             }}>
                 <List>
-                    <DrawerItem text={"Gallery"} url={"/gallery"}>
-                        <InsertPhotoRounded/>
-                    </DrawerItem>
-                    <DrawerItem text={"Sync"} url={"/sync"}>
-                        <SyncRounded/>
-                    </DrawerItem>
-                    <DrawerItem text={"Settings"} url={"/settings"}>
-                        <SettingsRounded/>
-                    </DrawerItem>
+                    <DrawerParentItem text={"Gallery"} url={"/gallery"} icon={<InsertPhotoRounded/>} sideMenu={open}>
+                        <DrawerItem text={"Gallery"} url={"/gallery"} icon={<InsertPhotoRounded/>} />
+                        <DrawerItem text={"Gallery"} url={"/gallery"} icon={<InsertPhotoRounded/>} />
+                        <DrawerItem text={"Gallery"} url={"/gallery"} icon={<InsertPhotoRounded/>} />
+                    </DrawerParentItem>
+                    <DrawerItem text={"Gallery"} url={"/gallery"} icon={<InsertPhotoRounded/>} />
+                    <DrawerItem text={"Sync"} url={"/sync"} icon={<SyncRounded/>} />
+                    <DrawerItem text={"Settings"} url={"/settings"} icon={<SettingsRounded/>} />
                 </List>
             </Box>
 
