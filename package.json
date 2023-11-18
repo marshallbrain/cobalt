@@ -5,26 +5,44 @@
   "type": "module",
   "scripts": {
     "build": "remix build",
-    "dev": "remix dev --manual",
+    "dev": "dotenv -e .env.development.local -- remix dev --manual",
+    "migrate": "dotenv -e .env.development.local -- npx prisma migrate dev",
+    "prototype": "dotenv -e .env.development.local -- npx prisma db push",
     "start": "remix-serve ./build/index.js",
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.14.17",
     "@remix-run/css-bundle": "^2.2.0",
     "@remix-run/node": "^2.2.0",
     "@remix-run/react": "^2.2.0",
     "@remix-run/serve": "^2.2.0",
+    "eventemitter3": "^5.0.1",
     "isbot": "^3.6.8",
+    "kysely": "^0.26.3",
+    "mime-types": "^2.1.35",
+    "pg": "^8.11.3",
+    "prisma": "^5.5.2",
+    "prisma-kysely": "^1.7.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "remix-utils": "^7.1.0",
+    "uuid": "^9.0.1",
+    "sharp": "^0.32.6"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.2.0",
     "@remix-run/eslint-config": "^2.2.0",
+    "@types/pg": "^8.10.9",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@types/mime-types": "^2.1.4",
+    "dotenv-cli": "^7.3.0",
     "eslint": "^8.38.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "@types/uuid": "^9.0.7"
   },
   "engines": {
     "node": ">=18.0.0"

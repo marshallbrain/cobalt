@@ -1,0 +1,71 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model files {
+  file_id       Int       @id @default(autoincrement())
+  file_name     String    @unique
+  file_path     String
+  file_hash     String
+  file_primary  Boolean
+
+  created_at    DateTime
+  modified_at   DateTime
+
+  photo         photos    @relation(fields: [photo_id], references: [photo_id])
+  photo_id      Int
+
+  @@unique([photo_id, file_primary])
+
+  // @@map("files")
+}
+
+model photos {
+  photo_id      Int       @id @default(autoincrement())
+  photo_width   Int
+  photo_height  Int
+  // photo_uuid    String
+  photo_type    String
+  photo_name    String
+  photo_rating  String
+  photo_source  String
+
+  created_at    DateTime
+  added_at      DateTime  @default(now())
+  modified_at   DateTime  @default(now())
+
+  file          files[]
+
+  author        author    @relation(fields: [author_id], references: [author_id])
+  author_id     Int
+
+  domain        domain    @relation(fields: [domain_id], references: [domain_id])
+  domain_id     Int
+}
+
+model author {
+  author_id     Int       @id @default(autoincrement())
+  author_name   String    @unique
+
+  photos        photos[]
+}
+
+model domain {
+  domain_id     Int       @id @default(autoincrement())
+  domain_name   String    @unique
+
+  photos        photos[]
+}
+
+model settings {
+  id      Int     @id @default(autoincrement())
+  theme   String  @default("dark")
+}
+
+generator kysely {
+  provider = "prisma-kysely"
+
+  output = "../app/db"
+  fileName = "types.ts"
+}
