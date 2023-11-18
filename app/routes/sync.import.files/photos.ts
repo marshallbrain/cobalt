@@ -6,7 +6,7 @@ import type {JsonData, Metadata} from "~/routes/sync.import.files/metadata";
 import {getMetadataStats, validateMetadataJson} from "~/routes/sync.import.files/metadata";
 import sharp from "sharp"
 
-export default async function importPhoto(fileName: string, filePath: string, full: boolean = true) {
+export default async function importPhoto(fileName: string, filePath: string, full: boolean) {
     let metadataLastUpdate: {modified_at: Date}[] | undefined
 
     const dupeId = await db.selectFrom("photos")

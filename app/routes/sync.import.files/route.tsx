@@ -26,15 +26,18 @@ export async function loader(
 export async function action({
     request
 }: ActionFunctionArgs) {
-    const folder = Object.fromEntries(await request.formData()).folder as string
+    const {folder, full} = Object.fromEntries(await request.formData())
 
     if (!originals) json({ok: false})
-    readdir(path.join(originals ?? "", folder), {withFileTypes: true}).then(async files => {
+    readdir(
+        path.join(originals ?? "", folder as string),
+        {withFileTypes: true}
+    ).then(async files => {
         files = files.filter(file => file.isFile() && isPhoto(file.name))
         const total = files.length
         let i = 0
         for (const file of files) {
-            await importPhoto(file.name, file.path)
+            await importPhoto(file.name, file.path, (full === "true"))
             const progress = (++i) / total
             importLogger.emit("progress", file, Math.floor(progress * 100))
         }

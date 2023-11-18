@@ -1,12 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import type {MetaFunction, LoaderFunctionArgs} from "@remix-run/node";
 import {defer} from "@remix-run/node";
-import {Box, Button, FormControl, InputLabel, LinearProgress, MenuItem, Select} from "@mui/material";
+import {Box, Button, Checkbox, FormControl,
+    FormControlLabel, FormGroup, InputLabel, LinearProgress, MenuItem, Select, Typography} from "@mui/material";
 import {readdir} from "fs/promises";
 import {originals} from "~/utils/utilities";
 import * as path from "path";
 import {useFetcher, useLoaderData} from "@remix-run/react";
 import { useEventSource } from 'remix-utils/sse/react';
+import {Stack} from "@mui/system";
 
 export const meta: MetaFunction = () => {
     return [{title: "Import"}]
@@ -29,6 +31,7 @@ export async function loader(
 
 export default function Import() {
     const [folder, setFolder] = useState("/")
+    const [options, setOptions] = useState({full: false, clean: false})
     const [folderList, setFolderList] = useState<string[]>([])
     const {folderLoader} = useLoaderData<typeof loader>()
     const fetcher = useFetcher()
@@ -38,17 +41,37 @@ export default function Import() {
         (async () => setFolderList(await folderLoader))()
     })
 
-    const startScan = () => fetcher.submit({folder},
+    const startScan = () => fetcher.submit(
+        {
+            folder,
+            ...options
+        },
         {
             action: "/sync/import/files",
             method: "post"
         }
     )
 
+    const changeOptions = (option: "full" | "clean") => (event: React.SyntheticEvent<Element, Event>, checked: boolean) => {
+        options[option] = checked
+        setOptions({...options})
+    }
+
     return (
-        <Box sx={{p: 2}}>
+        <Stack
+            direction="column"
+            justifyContent="flex-start"
+            alignItems="flex-start"
+            spacing={2}
+            sx={{
+                p: 2
+            }}
+        >
+            <Typography variant="body1" gutterBottom>{progress?.split("//")[0] ?? "No photos processed"}</Typography>
             <FormControl fullWidth>
                 <LinearProgress variant="determinate" value={parseInt(progress?.split("//").pop() ?? "0")} />
+            </FormControl>
+            <FormControl fullWidth>
                 <InputLabel>Folder</InputLabel>
                 <Select
                     label="Folder"
@@ -60,8 +83,23 @@ export default function Import() {
                         <MenuItem value={folder} key={folder}>{folder}</MenuItem>
                     ))}
                 </Select>
-                <Button variant="contained" onClick={startScan}>Start</Button>
             </FormControl>
-        </Box>
+            <FormGroup row>
+                <FormControlLabel
+                    control={<Checkbox />}
+                    label="Full scan"
+                    checked={options.full}
+                    onChange={changeOptions("full")
+                }/>
+                <FormControlLabel
+                    control={<Checkbox />}
+                    label="Clean up"
+                    checked={options.clean}
+                    onChange={changeOptions("clean")}
+                    disabled
+                />
+            </FormGroup>
+            <Button variant="contained" onClick={startScan}>Start</Button>
+        </Stack>
     )
 }
