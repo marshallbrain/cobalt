@@ -4,6 +4,7 @@ import * as fs from "fs/promises";
 import path from "path";
 import type {JsonData, Metadata} from "~/routes/sync.import.files/metadata";
 import {getMetadataStats, validateMetadataJson} from "~/routes/sync.import.files/metadata";
+import sharp from "sharp"
 
 export default async function importPhoto(fileName: string, filePath: string, full: boolean = true) {
     let metadataLastUpdate: {modified_at: Date}[] | undefined
@@ -26,7 +27,7 @@ export default async function importPhoto(fileName: string, filePath: string, fu
     const {dataFile, dataStats} = await getMetadataStats(fileName, filePath)
     if (metadataLastUpdate && dataStats && dataStats.mtime <= metadataLastUpdate[0].modified_at) return
 
-    let data: {name: string, props: FileProps} | undefined
+    let data: DataProps | undefined
     let json: JsonData = {}
     if (dataFile) {
         json = JSON.parse(await fs.readFile(path.join(filePath, dataFile), {encoding: 'utf8'}))
@@ -53,49 +54,93 @@ export default async function importPhoto(fileName: string, filePath: string, fu
         return
     }
 
+    const photoStats = await fs.stat(path.join(filePath, fileName))
+    const photoData = await sharp(path.join(filePath, fileName)).metadata()
+
+    // generateThumbnails(path.join(fileName, filePath))
+
+    const photo: PhotoProps = {
+        name: fileName,
+        width: photoData.width ?? 0,
+        height: photoData.height ?? 0,
+        props: {
+            created_at: photoStats.birthtime,
+            modified_at: photoStats.mtime
+        }
+    }
+
     await createPhotoEntry(
         metadata,
         filePath,
-        {name: fileName},
+        photo,
         data
     )
+}
 
-    // TODO implement rescan
-    // TODO create thumbnails
+async function getAuthorId(author: string) {
+    let authorId = await db.selectFrom("author")
+        .select("author_id")
+        .where("author_name", "=", author)
+        .executeTakeFirst()
+
+    if (!authorId) authorId = await db.insertInto("author")
+        .values({author_name: author})
+        .returning("author_id")
+        .executeTakeFirst()
+
+    return authorId?.author_id
+}
+
+async function getDomainId(domain: string) {
+    let domainId = await db.selectFrom("domain")
+        .select("domain_id")
+        .where("domain_name", "=", domain)
+        .executeTakeFirst()
+
+    if (!domainId) domainId = await db.insertInto("domain")
+        .values({domain_name: domain})
+        .returning("domain_id")
+        .executeTakeFirst()
+
+    return domainId?.domain_id
 }
 
 async function createPhotoEntry(
     metadata: Metadata,
     file: string,
-    photo: { name: string },
-    data: { name: string, props: FileProps} | undefined
+    photo: PhotoProps,
+    data: DataProps | undefined
 ) {
+    const {photo_author, photo_domain, ...values} = metadata
+
+    const authorId = await getAuthorId(photo_author)
+    const domainId = await getDomainId(photo_domain)
+
+    if (!authorId || !domainId) return
+
     const photoId = await db.insertInto("photos")
         .values({
-            ...metadata,
-            photo_width: 1,
-            photo_height: 1,
-            photo_type: path.extname(photo.name).replace(".", ""),
+            ...values,
+            photo_width: photo.width,
+            photo_height: photo.height,
+            photo_type: photo.name,
+            author_id: authorId,
+            domain_id: domainId
         })
         .returning("photo_id")
-        .executeTakeFirst().then((result) => result?.photo_id)
+        .executeTakeFirst()
+        .then((value) => value?.photo_id)
 
     if (!photoId) return
 
-    const photoStats = await fs.stat(path.join(file, photo.name))
-    const photoProps: FileProps = {
-        created_at: photoStats.birthtime,
-        modified_at: photoStats.mtime
-    }
-
     await db.insertInto("files")
         .values({
-            ...photoProps,
+            ...photo.props,
             file_name: photo.name,
             file_path: file,
             file_hash: "",
             file_primary: true,
-            photo_id: photoId
+            photo_id: photoId,
         })
         .execute()
 
@@ -108,7 +153,7 @@ async function createPhotoEntry(
             file_path: file,
             file_hash: "",
             file_primary: false,
-            photo_id: photoId
+            photo_id: photoId,
         })
         .execute()
 }
@@ -120,12 +165,19 @@ async function updatePhotoEntry(
     photo: { name: string },
     data: { name: string, props: FileProps} | undefined
 ) {
+    const {photo_author, photo_domain, ...values} = metadata
+
+    const authorId = await getAuthorId(metadata.photo_author)
+    const domainId = await getDomainId(metadata.photo_domain)
+
+    if (!authorId || !domainId) return
+
     await db.updateTable("photos")
         .set({
-            ...metadata,
-            photo_width: 1,
-            photo_height: 1,
-            modified_at: new Date().toISOString()
+            ...values,
+            modified_at: new Date().toISOString(),
+            author_id: authorId,
+            domain_id: domainId
         })
         .where("photo_id", "=", dupeId)
         .execute()
@@ -136,11 +188,18 @@ async function updatePhotoEntry(
         .set({
             ...data.props,
             file_name: data.name,
+            file_path: file,
+            file_hash: "",
+            photo_id: dupeId,
         })
         .where("photo_id", "=", dupeId)
         .where("file_primary", "=", false)
         .execute()
 }
+
+/*async function generateThumbnails(file: string) {
+    sharp(file)
+}*/
 
 export function isPhoto(file: string) {
     return supportedTypes.includes(mime.lookup(file) || "")
@@ -151,8 +210,25 @@ const supportedTypes = [
     mime.types["png"]
 ]
 
-
 interface FileProps {
     created_at: Date
     modified_at: Date
+}
+
+interface PhotoProps {
+    name: string
+    width: number
+    height: number
+    props: {
+        created_at: Date
+        modified_at: Date
+    }
+}
+
+interface DataProps {
+    name: string
+    props: {
+        created_at: Date
+        modified_at: Date
+    }
 }

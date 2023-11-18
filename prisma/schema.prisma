@@ -25,11 +25,10 @@ model photos {
   photo_id      Int       @id @default(autoincrement())
   photo_width   Int
   photo_height  Int
+  // photo_uuid    String
   photo_type    String
   photo_name    String
-  photo_author  String
   photo_rating  String
-  photo_domain  String
   photo_source  String
 
   created_at    DateTime
@@ -37,6 +36,26 @@ model photos {
   modified_at   DateTime  @default(now())
 
   file          files[]
+
+  author        author    @relation(fields: [author_id], references: [author_id])
+  author_id     Int
+
+  domain        domain    @relation(fields: [domain_id], references: [domain_id])
+  domain_id     Int
+}
+
+model author {
+  author_id     Int       @id @default(autoincrement())
+  author_name   String    @unique
+
+  photos        photos[]
+}
+
+model domain {
+  domain_id     Int       @id @default(autoincrement())
+  domain_name   String    @unique
+
+  photos        photos[]
 }
 
 model settings {
