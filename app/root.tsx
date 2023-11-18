@@ -9,12 +9,16 @@ import {
     ScrollRestoration, useLoaderData,
 } from "@remix-run/react";
 import type { ThemeOptions} from "@mui/material";
-import {ThemeProvider, createTheme, CssBaseline, Box} from "@mui/material";
+import {ThemeProvider, createTheme, CssBaseline, Box, List, styled} from "@mui/material";
 import React, {useState} from "react";
-import MenuBar from "~/components/MenuBar";
+import SideMenu from "~/components/SideMenu";
 import {db} from "~/db/database.server";
 import themes from "~/utils/themes";
 import {json} from "@remix-run/node";
+import DrawerItem from "~/components/DrawerItem";
+import InsertPhotoRounded from "~/components/icons/InsertPhotoRounded";
+import SyncRounded from "~/components/icons/SyncRounded";
+import SettingsRounded from "~/components/icons/SettingsRounded";
 
 export const links: LinksFunction = () => [
     ...(cssBundleHref ? [{rel: "stylesheet", href: cssBundleHref}] : []),
@@ -49,15 +53,32 @@ export default function App() {
         </head>
         <body>
             <ThemeProvider theme={theme}>
-                <CssBaseline/>
-                <MenuBar open={drawer} toggle={toggleDrawer}/>
-                <Box
-                    sx={{
-                        width: {sm: `calc(100% - ${drawer? "240px": theme.spacing(7)})`},
-                        ml: {sm: `${drawer? "240px": theme.spacing(7)}`},
-                    }}
-                >
-                    <Outlet/>
+                <CssBaseline enableColorScheme/>
+                <Box sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "stretch"
+                }}>
+                    <Box sx={{
+                        flexBasis: (drawer)? 240:theme.spacing(7),
+                        borderRight: "1px solid " + theme.palette.divider,
+                        overflow: 'hidden',
+                        height: "100vh",
+                        display: "flex",
+                        flexDirection: "column",
+                        transition: theme.transitions.create("flex-basis", {
+                            easing: theme.transitions.easing.sharp,
+                            duration: theme.transitions.duration.enteringScreen,
+                        })
+                    }}>
+                        <SideMenu open={drawer} toggle={toggleDrawer}/>
+                    </Box>
+                    <Box sx={{
+                        display: "block",
+                        flexGrow: 1
+                    }}>
+                        <Outlet/>
+                    </Box>
                 </Box>
             </ThemeProvider>
         <ScrollRestoration/>
