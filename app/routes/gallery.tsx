@@ -1,5 +1,6 @@
 import React from 'react';
 import type {MetaFunction} from "@remix-run/node";
+import SearchBar from "~/components/SearchBar";
 
 export const meta: MetaFunction = () => {
     return [
@@ -9,7 +10,8 @@ export const meta: MetaFunction = () => {
 
 export default function Gallery() {
     return (
-        <div>
-        </div>
+        <>
+            <SearchBar/>
+        </>
     )
 }
