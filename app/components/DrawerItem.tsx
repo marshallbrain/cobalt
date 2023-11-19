@@ -1,20 +1,11 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
-    CSSObject,
-    Collapse,
-    IconButton,
-    List,
     ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
-    SvgIconTypeMap,
-    Theme
 } from "@mui/material";
 import {Link, useLocation} from "@remix-run/react";
-import {OverridableComponent} from "@mui/types";
-import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
-import ExpandLessRounded from "~/components/icons/ExpandLessRounded";
 
 const DrawerItem = (props: PropTypes) => {
     const {text, url, icon} = props

@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {
-    CSSObject,
     Collapse,
     IconButton,
     List,
@@ -8,11 +7,8 @@ import {
     ListItemButton,
     ListItemIcon,
     ListItemText,
-    SvgIconTypeMap,
-    Theme
 } from "@mui/material";
 import {Link, useLocation} from "@remix-run/react";
-import {OverridableComponent} from "@mui/types";
 import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
 import ExpandLessRounded from "~/components/icons/ExpandLessRounded";
 
