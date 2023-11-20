@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import type {MetaFunction} from "@remix-run/node";
+import type {SearchQuery} from "~/components/SearchBar";
 import SearchBar from "~/components/SearchBar";
 
 export const meta: MetaFunction = () => {
@@ -9,9 +10,16 @@ export const meta: MetaFunction = () => {
 }
 
 export default function Gallery() {
+    const [search, setSearch] = useState<SearchQuery>({
+        query: "",
+        sort: "name",
+        order: false,
+        rating: "general"
+    })
+
     return (
         <>
-            <SearchBar/>
+            <SearchBar search={search} updateSearch={setSearch}/>
         </>
     )
 }

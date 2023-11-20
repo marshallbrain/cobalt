@@ -19,6 +19,7 @@ import SearchRounded from "~/components/icons/SearchRounded";
 import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
 import ExpandLessRounded from "~/components/icons/ExpandLessRounded";
 import ArrowDownwardRounded from "~/components/icons/ArrowDownwardRounded";
+import ArrowUpwardRounded from "~/components/icons/ArrowUpwardRounded";
 
 const Search = styled('div')(({ theme }) => ({
     position: "relative",
@@ -49,11 +50,19 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }))
 
 export default function SearchBar (props: PropTypes) {
-    const {} = props
+    const {search, updateSearch} = props
+    const [query, setQuery] = useState("")
     const [options, setOptions] = useState(false)
 
-    const toggleOptions = () => {
-        setOptions(!options)
+    const updateQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setQuery(event.target.value)
+    }
+
+    const updateOptions = (option: Partial<Omit<SearchQuery, "query">>) => {
+        updateSearch({
+            ...search,
+            ...option
+        })
     }
 
     return (
@@ -65,10 +74,21 @@ export default function SearchBar (props: PropTypes) {
                     </SearchIconWrapper>
                     <StyledInputBase
                         placeholder="Search"
+                        value={query}
+                        onChange={updateQuery}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                event.preventDefault()
+                                updateSearch({
+                                    ...search,
+                                    query
+                                })
+                            }
+                        }}
                     />
                 </Search>
                 <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                    <IconButton size="large" color="inherit" onClick={toggleOptions}>
+                    <IconButton size="large" color="inherit" onClick={() => {setOptions(!options)}}>
                         {(options)? <ExpandLessRounded/>: <ExpandMoreRounded/>}
                     </IconButton>
                 </Box>
@@ -80,19 +100,33 @@ export default function SearchBar (props: PropTypes) {
                         <Stack direction="row" justifyContent="center" alignItems="center" spacing={1}>
                             <FormControl fullWidth>
                                 <InputLabel>Order</InputLabel>
-                                <Select label="Order">
+                                <Select
+                                    label="Order"
+                                    value={search.sort}
+                                    onChange={(event) => {
+                                        updateOptions({sort: event.target.value as Sort})
+                                    }}
+                                >
                                     <MenuItem value={"name"}>Name</MenuItem>
                                 </Select>
                             </FormControl>
-                            <IconButton>
-                                <ArrowDownwardRounded />
+                            <IconButton onClick={(event) => {
+                                updateOptions({order: !search.order})
+                            }}>
+                                {(search.order)? <ArrowUpwardRounded />: <ArrowDownwardRounded />}
                             </IconButton>
                         </Stack>
                     </Grid>
                     <Grid xs={6}>
                         <FormControl fullWidth>
                             <InputLabel>Rating</InputLabel>
-                            <Select label="Rating">
+                            <Select
+                                label="Rating"
+                                value={search.rating}
+                                onChange={(event) => {
+                                    updateOptions({rating: event.target.value as Rating})
+                                }}
+                            >
                                 <MenuItem value={"general"}>General</MenuItem>
                                 <MenuItem value={"mature"}>Mature</MenuItem>
                                 <MenuItem value={"explicit"}>Explicit</MenuItem>
@@ -106,4 +140,17 @@ export default function SearchBar (props: PropTypes) {
 }
 
 interface PropTypes {
+    search: SearchQuery
+    updateSearch: (search: SearchQuery) => void
 }
+
+export interface SearchQuery {
+    query: string
+    sort: Sort
+    order: boolean
+    rating: Rating
+}
+
+type Sort = "name"
+
+type Rating = "general" | "mature" | "explicit"
