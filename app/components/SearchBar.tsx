@@ -20,6 +20,7 @@ import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
 import ExpandLessRounded from "~/components/icons/ExpandLessRounded";
 import ArrowDownwardRounded from "~/components/icons/ArrowDownwardRounded";
 import ArrowUpwardRounded from "~/components/icons/ArrowUpwardRounded";
+import {SubmitFunction} from "@remix-run/react";
 
 const Search = styled('div')(({ theme }) => ({
     position: "relative",
@@ -50,8 +51,8 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }))
 
 export default function SearchBar (props: PropTypes) {
-    const {search, updateSearch} = props
-    const [query, setQuery] = useState("")
+    const {search, onSearch} = props
+    const [query, setQuery] = useState(search.query ?? "")
     const [options, setOptions] = useState(false)
 
     const updateQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,7 +60,8 @@ export default function SearchBar (props: PropTypes) {
     }
 
     const updateOptions = (option: Partial<Omit<SearchQuery, "query">>) => {
-        updateSearch({
+        console.log(search)
+        onSearch({
             ...search,
             ...option
         })
@@ -79,7 +81,7 @@ export default function SearchBar (props: PropTypes) {
                         onKeyDown={(event) => {
                             if (event.key === "Enter") {
                                 event.preventDefault()
-                                updateSearch({
+                                onSearch({
                                     ...search,
                                     query
                                 })
@@ -99,10 +101,10 @@ export default function SearchBar (props: PropTypes) {
                     <Grid xs={6}>
                         <Stack direction="row" justifyContent="center" alignItems="center" spacing={1}>
                             <FormControl fullWidth>
-                                <InputLabel>Order</InputLabel>
+                                <InputLabel>Sort</InputLabel>
                                 <Select
-                                    label="Order"
-                                    value={search.sort}
+                                    label="Sort"
+                                    value={search.sort ?? "name"}
                                     onChange={(event) => {
                                         updateOptions({sort: event.target.value as Sort})
                                     }}
@@ -122,7 +124,7 @@ export default function SearchBar (props: PropTypes) {
                             <InputLabel>Rating</InputLabel>
                             <Select
                                 label="Rating"
-                                value={search.rating}
+                                value={search.rating ?? "general"}
                                 onChange={(event) => {
                                     updateOptions({rating: event.target.value as Rating})
                                 }}
@@ -141,15 +143,15 @@ export default function SearchBar (props: PropTypes) {
 
 interface PropTypes {
     search: SearchQuery
-    updateSearch: (search: SearchQuery) => void
+    onSearch:  SubmitFunction
 }
 
-export interface SearchQuery {
+export type SearchQuery = Partial<{
     query: string
     sort: Sort
     order: boolean
     rating: Rating
-}
+}>
 
 type Sort = "name"
 
