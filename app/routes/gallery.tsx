@@ -24,7 +24,7 @@ export async function loader({
 
     query = queryOrder(query, params.get("sort") ?? "name", (params.get("order") === "true")? "asc": "desc")
 
-    console.log(query.compile())
+    // console.log(query.compile())
 
     return json({})
 }

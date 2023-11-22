@@ -6,11 +6,11 @@ import {
     Meta,
     Outlet,
     Scripts,
-    ScrollRestoration, useLoaderData,
+    ScrollRestoration, useFetcher, useLoaderData,
 } from "@remix-run/react";
 import type {ThemeOptions} from "@mui/material";
 import {ThemeProvider, createTheme, CssBaseline, Box} from "@mui/material";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import SideMenu, {MenuLayout} from "~/components/SideMenu";
 import {db} from "~/db/database.server";
 import themes from "~/utils/themes";
@@ -23,10 +23,9 @@ export const links: LinksFunction = () => [
 export async function loader(
     {request}: LoaderFunctionArgs
 ) {
-    const theme = await db.selectFrom("settings")
-        .select("theme")
-        .limit(1)
-        .execute().then(r => r[0].theme)
+    const {theme} = await db.selectFrom("settings")
+        .select(["theme"])
+        .executeTakeFirstOrThrow().catch(() => {throw json("Not Found", {status: 404})})
 
     return json({
         themeOptions: themes[(theme in themes) ? theme : "dark"]

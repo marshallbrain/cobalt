@@ -59,8 +59,10 @@ model domain {
 }
 
 model settings {
-  id      Int     @id @default(autoincrement())
-  theme   String  @default("dark")
+  id        Int       @id @default(autoincrement())
+  theme     String    @default("dark")
+  ratings   String[]  @default(["General", "Hidden"])
+  ratingFav Int       @default(1)
 }
 
 generator kysely {

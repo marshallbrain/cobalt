@@ -1,9 +1,11 @@
 import themes from "~/utils/themes";
 
 export function validateSettings(data: { [p: string]: File | string }) {
-    let settings: Settings = {id: 1}
+    const settings: Settings = {id: 1}
 
-    if ("theme" in data && data.theme as string in themes) settings = {...settings, theme: data.theme as string}
+    if ("theme" in data && data.theme as string in themes) settings.theme = data.theme as string
+    if ("ratings" in data) settings.ratings = (data.ratings as string).split(",")
+    if ("ratingFav" in data) settings.ratingFav = parseInt(data.ratingFav as string)
 
     return settings
 }
@@ -11,4 +13,6 @@ export function validateSettings(data: { [p: string]: File | string }) {
 interface Settings {
     id: number
     theme?: string
+    ratings?: string[],
+    ratingFav?: number
 }

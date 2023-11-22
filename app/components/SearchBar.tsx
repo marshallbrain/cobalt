@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     AppBar,
     Box,
@@ -20,7 +20,9 @@ import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
 import ExpandLessRounded from "~/components/icons/ExpandLessRounded";
 import ArrowDownwardRounded from "~/components/icons/ArrowDownwardRounded";
 import ArrowUpwardRounded from "~/components/icons/ArrowUpwardRounded";
-import {SubmitFunction} from "@remix-run/react";
+import type {SubmitFunction} from "@remix-run/react";
+import {useFetcher} from "@remix-run/react";
+import {loader} from "~/routes/settings";
 
 const Search = styled('div')(({ theme }) => ({
     position: "relative",
@@ -54,6 +56,13 @@ export default function SearchBar (props: PropTypes) {
     const {search, onSearch} = props
     const [query, setQuery] = useState(search.query ?? "")
     const [options, setOptions] = useState(false)
+    const fetcher = useFetcher<typeof loader>({key: "settings"})
+
+    useEffect(() => {
+        if (fetcher.state === 'idle' && !fetcher.data) {
+            fetcher.load("/settings")
+        }
+    }, [fetcher.state, fetcher.data, fetcher])
 
     const updateQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
         setQuery(event.target.value)
@@ -129,8 +138,10 @@ export default function SearchBar (props: PropTypes) {
                                     updateOptions({rating: event.target.value as number})
                                 }}
                             >
-                                <MenuItem value={0}>General</MenuItem>
-                                <MenuItem value={1}>Hidden</MenuItem>
+                                {fetcher.data?.ratings.map((value, index) => (
+                                    <MenuItem key={index} value={index}>{value}</MenuItem>
+                                ))}
+                                <MenuItem value={fetcher.data?.ratings.length ?? 0}>All</MenuItem>
                             </Select>
                         </FormControl>
                     </Grid>

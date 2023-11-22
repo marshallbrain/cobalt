@@ -22,6 +22,9 @@ import {db} from "~/db/database.server";
 import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
 import ExpandLessRounded from "~/components/icons/ExpandLessRounded";
 import SyncRounded from "~/components/icons/SyncRounded";
+import DeleteRounded from "~/components/icons/DeleteRounded";
+import FavoriteRounded from "~/components/icons/FavoriteRounded";
+import FavoriteBorderRounded from "~/components/icons/FavoriteBorderRounded";
 
 export const meta: MetaFunction = () => {
     return [
@@ -33,7 +36,7 @@ export async function loader(
     {request}: LoaderFunctionArgs
 ) {
     const settings = await db.selectFrom("settings")
-        .select(["theme"])
+        .select(["theme", "ratings", "ratingFav"])
         .limit(1)
         .execute().then(r => r[0])
 
@@ -41,10 +44,11 @@ export async function loader(
 }
 
 export default function General() {
-    const [ratings, setRatings] = useState(["General", "Hidden"])
-
     const fetcher = useFetcher()
     const settings = useLoaderData<typeof loader>()
+
+    const [ratings, setRatings] = useState(settings.ratings)
+    const [ratingFav, setRatingFav] = useState(settings.ratingFav)
 
     const changeTheme = (event: SelectChangeEvent) => {
         fetcher.submit({theme: event.target.value},
@@ -56,7 +60,8 @@ export default function General() {
     }
 
     const saveRatings = () => {
-        fetcher.submit({ratings},
+        console.log(ratings, ratingFav)
+        fetcher.submit({ratings, ratingFav},
             {
                 action: "/settings",
                 method: "post"
@@ -131,11 +136,14 @@ export default function General() {
                                                 <ExpandMoreRounded/>
                                             </Button>
                                         </ButtonGroup>
+                                        <IconButton onClick={() => setRatingFav(index)}>
+                                            {(ratingFav == index)? <FavoriteRounded/>: <FavoriteBorderRounded/>}
+                                        </IconButton>
                                         <IconButton onClick={() => {
                                             ratings.splice(index, 1)
                                             setRatings([...ratings])
                                         }}>
-                                            <SyncRounded/>
+                                            <DeleteRounded/>
                                         </IconButton>
                                     </Stack>
                                 ))}
@@ -146,7 +154,7 @@ export default function General() {
                             <Button
                                 variant="outlined"
                                 disabled={ratings.some(value => value.length == 0)}
-                                onClick={() => saveRatings}
+                                onClick={saveRatings}
                             >
                                 Save
                             </Button>

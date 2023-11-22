@@ -39,6 +39,8 @@ export type photos = {
 export type settings = {
     id: Generated<number>;
     theme: Generated<string>;
+    ratings: Generated<string[]>;
+    ratingFav: Generated<number>;
 };
 export type DB = {
     author: author;
