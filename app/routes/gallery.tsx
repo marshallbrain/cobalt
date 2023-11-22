@@ -13,6 +13,8 @@ export async function loader({
 }: LoaderFunctionArgs) {
     const params = new URL(request.url).searchParams
 
+    console.log(params)
+
     let query: Query = db.selectFrom("photos")
         .innerJoin("author", "author.author_id", "photos.author_id")
         .innerJoin("domain", "domain.domain_id", "photos.domain_id")
@@ -22,7 +24,7 @@ export async function loader({
 
     query = query.where("photo_rating", "<=", parseInt(params.get("rating") ?? "0"))
 
-    query = queryOrder(query, params.get("sort") ?? "name", (params.get("order") === "true")? "asc": "desc")
+    query = queryOrder(query, params.get("sort") ?? "name", params.has("order", "true"))
 
     // console.log(query.compile())
 
@@ -33,10 +35,10 @@ function querySearch(query: Query, search: string) {
     return query.where("photo_name", "like", search)
 }
 
-function queryOrder(query: Query, order: string, dir: "asc" | "desc") {
+function queryOrder(query: Query, order: string, dir: boolean) {
     switch (order) {
         default:
-            return query.orderBy("photo_name", dir)
+            return query.orderBy("photo_name", (dir)? "asc": "desc")
     }
 }
 

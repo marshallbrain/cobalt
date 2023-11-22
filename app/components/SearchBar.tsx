@@ -69,7 +69,10 @@ export default function SearchBar (props: PropTypes) {
     }
 
     const updateOptions = (option: Partial<Omit<SearchQuery, "query">>) => {
-        console.log(search)
+        console.log({
+            ...search,
+            ...option
+        })
         onSearch({
             ...search,
             ...option
@@ -122,9 +125,9 @@ export default function SearchBar (props: PropTypes) {
                                 </Select>
                             </FormControl>
                             <IconButton onClick={(event) => {
-                                updateOptions({order: !search.order})
+                                updateOptions({order: search.order !== "true"})
                             }}>
-                                {(search.order)? <ArrowUpwardRounded />: <ArrowDownwardRounded />}
+                                {(search.order === "true")? <ArrowUpwardRounded />: <ArrowDownwardRounded />}
                             </IconButton>
                         </Stack>
                     </Grid>
@@ -159,7 +162,7 @@ interface PropTypes {
 export type SearchQuery = Partial<{
     query: string
     sort: Sort
-    order: boolean
+    order: boolean | string
     rating: number
 }>
 
