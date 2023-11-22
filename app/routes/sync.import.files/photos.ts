@@ -5,8 +5,14 @@ import path from "path";
 import type {JsonData, Metadata} from "~/routes/sync.import.files/metadata";
 import {getMetadataStats, validateMetadataJson} from "~/routes/sync.import.files/metadata";
 import sharp from "sharp"
+import {DB} from "~/db/types";
 
-export default async function importPhoto(fileName: string, filePath: string, full: boolean) {
+export default async function importPhoto(
+    fileName: string,
+    filePath: string,
+    full: boolean,
+    settings: {ratingFav: number}
+) {
     let metadataLastUpdate: {modified_at: Date}[] | undefined
 
     const dupeId = await db.selectFrom("photos")
@@ -41,7 +47,11 @@ export default async function importPhoto(fileName: string, filePath: string, fu
         }
     }
 
-    const metadata = validateMetadataJson(json, fileName.replace(path.extname(fileName), ""))
+    const metadata = validateMetadataJson(
+        json,
+        fileName.replace(path.extname(fileName), ""),
+        settings.ratingFav
+    )
 
     if (dupeId.length > 0) {
         await updatePhotoEntry(

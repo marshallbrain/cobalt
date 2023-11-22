@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     AppBar,
     Box,
@@ -20,7 +20,9 @@ import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
 import ExpandLessRounded from "~/components/icons/ExpandLessRounded";
 import ArrowDownwardRounded from "~/components/icons/ArrowDownwardRounded";
 import ArrowUpwardRounded from "~/components/icons/ArrowUpwardRounded";
-import {SubmitFunction} from "@remix-run/react";
+import type {SubmitFunction} from "@remix-run/react";
+import {useFetcher} from "@remix-run/react";
+import {loader} from "~/routes/settings";
 
 const Search = styled('div')(({ theme }) => ({
     position: "relative",
@@ -54,13 +56,23 @@ export default function SearchBar (props: PropTypes) {
     const {search, onSearch} = props
     const [query, setQuery] = useState(search.query ?? "")
     const [options, setOptions] = useState(false)
+    const fetcher = useFetcher<typeof loader>({key: "settings"})
+
+    useEffect(() => {
+        if (fetcher.state === 'idle' && !fetcher.data) {
+            fetcher.load("/settings")
+        }
+    }, [fetcher.state, fetcher.data, fetcher])
 
     const updateQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
         setQuery(event.target.value)
     }
 
     const updateOptions = (option: Partial<Omit<SearchQuery, "query">>) => {
-        console.log(search)
+        console.log({
+            ...search,
+            ...option
+        })
         onSearch({
             ...search,
             ...option
@@ -113,9 +125,9 @@ export default function SearchBar (props: PropTypes) {
                                 </Select>
                             </FormControl>
                             <IconButton onClick={(event) => {
-                                updateOptions({order: !search.order})
+                                updateOptions({order: search.order !== "true"})
                             }}>
-                                {(search.order)? <ArrowUpwardRounded />: <ArrowDownwardRounded />}
+                                {(search.order === "true")? <ArrowUpwardRounded />: <ArrowDownwardRounded />}
                             </IconButton>
                         </Stack>
                     </Grid>
@@ -124,14 +136,15 @@ export default function SearchBar (props: PropTypes) {
                             <InputLabel>Rating</InputLabel>
                             <Select
                                 label="Rating"
-                                value={search.rating ?? "general"}
+                                value={search.rating ?? 0}
                                 onChange={(event) => {
-                                    updateOptions({rating: event.target.value as Rating})
+                                    updateOptions({rating: event.target.value as number})
                                 }}
                             >
-                                <MenuItem value={"general"}>General</MenuItem>
-                                <MenuItem value={"mature"}>Mature</MenuItem>
-                                <MenuItem value={"explicit"}>Explicit</MenuItem>
+                                {fetcher.data?.ratings.map((value, index) => (
+                                    <MenuItem key={index} value={index}>{value}</MenuItem>
+                                ))}
+                                <MenuItem value={fetcher.data?.ratings.length ?? 0}>All</MenuItem>
                             </Select>
                         </FormControl>
                     </Grid>
@@ -149,10 +162,8 @@ interface PropTypes {
 export type SearchQuery = Partial<{
     query: string
     sort: Sort
-    order: boolean
-    rating: Rating
+    order: boolean | string
+    rating: number
 }>
 
 type Sort = "name"
-
-type Rating = "general" | "mature" | "explicit"
