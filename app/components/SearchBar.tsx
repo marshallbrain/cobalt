@@ -124,14 +124,13 @@ export default function SearchBar (props: PropTypes) {
                             <InputLabel>Rating</InputLabel>
                             <Select
                                 label="Rating"
-                                value={search.rating ?? "general"}
+                                value={search.rating ?? 0}
                                 onChange={(event) => {
-                                    updateOptions({rating: event.target.value as Rating})
+                                    updateOptions({rating: event.target.value as number})
                                 }}
                             >
-                                <MenuItem value={"general"}>General</MenuItem>
-                                <MenuItem value={"mature"}>Mature</MenuItem>
-                                <MenuItem value={"explicit"}>Explicit</MenuItem>
+                                <MenuItem value={0}>General</MenuItem>
+                                <MenuItem value={1}>Hidden</MenuItem>
                             </Select>
                         </FormControl>
                     </Grid>
@@ -150,9 +149,7 @@ export type SearchQuery = Partial<{
     query: string
     sort: Sort
     order: boolean
-    rating: Rating
+    rating: number
 }>
 
 type Sort = "name"
-
-type Rating = "general" | "mature" | "explicit"

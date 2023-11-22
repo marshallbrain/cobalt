@@ -20,7 +20,7 @@ export async function loader({
 
     query = querySearch(query, params.get("query") ?? "")
 
-    query = queryRating(query, params.get("rating") ?? "general")
+    query = query.where("photo_rating", "<=", parseInt(params.get("rating") ?? "0"))
 
     query = queryOrder(query, params.get("sort") ?? "name", (params.get("order") === "true")? "asc": "desc")
 
@@ -31,17 +31,6 @@ export async function loader({
 
 function querySearch(query: Query, search: string) {
     return query.where("photo_name", "like", search)
-}
-
-function queryRating(query: Query, rating: string) {
-    switch (rating) {
-        case "explicit":
-            return query.where("photo_rating", "in", ["general", "mature", "explicit"])
-        case "mature":
-            return query.where("photo_rating", "in", ["general", "mature"])
-        default:
-            return query.where("photo_rating", "in", ["general"])
-    }
 }
 
 function queryOrder(query: Query, order: string, dir: "asc" | "desc") {

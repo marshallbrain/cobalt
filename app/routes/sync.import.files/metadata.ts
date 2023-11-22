@@ -17,7 +17,7 @@ export function validateMetadataJson(json: JsonData, titleFallback: string): Met
     return {
         photo_name: json.title ?? titleFallback,
         photo_author: json.artist ?? "",
-        photo_rating: json.rating ?? "Explicit",
+        photo_rating: parseInt(json.rating ?? "1"),
         photo_domain: json.domain ?? "Raw",
         photo_source: json.source ?? "",
         created_at: json.createDate ?? ""
@@ -36,7 +36,7 @@ export interface JsonData {
 export interface Metadata {
     photo_name: string
     photo_author: string
-    photo_rating: string
+    photo_rating: number
     photo_domain: string
     photo_source: string
     created_at: string
