@@ -28,21 +28,22 @@
     "prisma-kysely": "^1.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-virtuoso": "^4.6.2",
     "remix-utils": "^7.1.0",
-    "uuid": "^9.0.1",
-    "sharp": "^0.32.6"
+    "sharp": "^0.32.6",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.2.0",
     "@remix-run/eslint-config": "^2.2.0",
+    "@types/mime-types": "^2.1.4",
     "@types/pg": "^8.10.9",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
-    "@types/mime-types": "^2.1.4",
+    "@types/uuid": "^9.0.7",
     "dotenv-cli": "^7.3.0",
     "eslint": "^8.38.0",
-    "typescript": "^5.1.6",
-    "@types/uuid": "^9.0.7"
+    "typescript": "^5.1.6"
   },
   "engines": {
     "node": ">=18.0.0"
