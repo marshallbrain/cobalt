@@ -1,19 +1,18 @@
 import React from 'react';
 import SearchBar from "~/components/SearchBar";
 import {useSearchParams, useSubmit} from "@remix-run/react";
-import {json, LoaderFunctionArgs} from "@remix-run/node";
+import type { LoaderFunctionArgs} from "@remix-run/node";
+import {json} from "@remix-run/node";
 import {db} from "~/db/database.server";
-import {SelectQueryBuilder} from "kysely";
-import {DB} from "~/db/types";
+import type {SelectQueryBuilder} from "kysely";
+import type {DB} from "~/db/types";
 
-type Query =  SelectQueryBuilder<DB, "photos" | "author" | "domain", {photo_id: number, photo_name: string, author_name: string, domain_name: string}>
+const regex = /"(.+)"|(\w+)/g
 
 export async function loader({
     request,
 }: LoaderFunctionArgs) {
     const params = new URL(request.url).searchParams
-
-    console.log(params)
 
     let query: Query = db.selectFrom("photos")
         .innerJoin("author", "author.author_id", "photos.author_id")
@@ -26,13 +25,17 @@ export async function loader({
 
     query = queryOrder(query, params.get("sort") ?? "name", params.has("order", "true"))
 
-    // console.log(query.compile())
+    console.log(query.compile())
 
     return json({})
 }
 
 function querySearch(query: Query, search: string) {
-    return query.where("photo_name", "like", search)
+    const terms = [...search.matchAll(regex)].map(term => term[1] || term[2])
+    terms.forEach(term => {
+        query = query.where("photo_name", "like", "%".concat(term, "%"))
+    })
+    return query
 }
 
 function queryOrder(query: Query, order: string, dir: boolean) {
@@ -52,3 +55,14 @@ export default function Gallery() {
         </>
     )
 }
+
+type Query =  SelectQueryBuilder<
+    DB,
+    "photos" | "author" | "domain",
+    {
+        photo_id: number,
+        photo_name: string,
+        author_name: string,
+        domain_name: string
+    }
+>
