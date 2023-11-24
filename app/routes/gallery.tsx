@@ -1,51 +1,9 @@
 import React, {forwardRef, useCallback, useEffect, useState} from 'react';
 import SearchBar from "~/components/SearchBar";
-import {useSearchParams, useSubmit} from "@remix-run/react";
-import type { LoaderFunctionArgs} from "@remix-run/node";
-import {json} from "@remix-run/node";
-import {db} from "~/db/database.server";
-import type {SelectQueryBuilder} from "kysely";
-import type {DB} from "~/db/types";
+import {useFetcher, useSearchParams, useSubmit} from "@remix-run/react";
 import { VirtuosoGrid } from 'react-virtuoso';
-import {Box, Paper, Skeleton, Stack, styled} from "@mui/material";
-
-const regex = /"(.+)"|(\w+)/g
-
-export async function loader({
-    request,
-}: LoaderFunctionArgs) {
-    const params = new URL(request.url).searchParams
-
-    let query: Query = db.selectFrom("photos")
-        .innerJoin("author", "author.author_id", "photos.author_id")
-        .innerJoin("domain", "domain.domain_id", "photos.domain_id")
-        .select(["photo_id", "photo_name", "author_name", "domain_name"])
-
-    query = querySearch(query, params.get("query") ?? "")
-
-    query = query.where("photo_rating", "<=", parseInt(params.get("rating") ?? "0"))
-
-    query = queryOrder(query, params.get("sort") ?? "name", params.has("order", "true"))
-
-    // console.log(query.compile())
-
-    return json({})
-}
-
-function querySearch(query: Query, search: string) {
-    const terms = [...search.matchAll(regex)].map(term => term[1] || term[2])
-    terms.forEach(term => {
-        query = query.where("photo_name", "like", "%".concat(term, "%"))
-    })
-    return query
-}
-
-function queryOrder(query: Query, order: string, dir: boolean) {
-    switch (order) {
-        default:
-            return query.orderBy("photo_name", (dir)? "asc": "desc")
-    }
-}
+import {Box, Chip, Unstable_Grid2 as Grid, Paper, Skeleton, Stack, Typography, styled} from "@mui/material";
+import {loader} from "~/routes/search";
 
 const ItemWrapper = styled("div")(theme => ({
     flexBasis: 100/6 + "%",
@@ -61,14 +19,31 @@ const GalleryWrapper = styled("div")(({theme}) => ({
 
 export default function Gallery() {
     const [search] = useSearchParams()
+    const [photos, setPhotos] = useState<Exclude<typeof fetcher.data, undefined>>([])
+    const [hydrate, setHydrate] = useState(false)
+    const fetcher = useFetcher<typeof loader>()
     const setSearch = useSubmit()
-    const [users, setUsers] = useState<number[]>(() => [1, 2, 3, 4, 5, 6])
 
-    const loadMore = useCallback(() => setUsers(users => [...users, ...Array(16).keys()]), [setUsers])
+    const loadMore = useCallback(() => {
+        if (fetcher.state == "idle") fetcher.load("/search?" + new URLSearchParams(search))
+    }, [fetcher, search])
 
     useEffect(() => {
-        loadMore()
-    }, [loadMore])
+        if (fetcher.state === "loading") return
+        if (fetcher.data) setPhotos((prevState: typeof photos) => [...prevState, ...fetcher.data ?? []])
+    }, [fetcher.data, fetcher.state])
+
+    useEffect(() => {
+        setHydrate(false)
+        setPhotos([])
+    }, [search])
+
+    useEffect(() => {
+        if (!hydrate) {
+            setHydrate(true)
+            loadMore()
+        }
+    }, [hydrate, loadMore])
 
     return (
         <Stack
@@ -80,35 +55,41 @@ export default function Gallery() {
         >
             <SearchBar search={Object.fromEntries(search.entries())} onSearch={setSearch}/>
             <VirtuosoGrid
-                data={users}
+                data={photos}
                 endReached={loadMore}
-                overscan={8}
+                overscan={24}
                 components={{
                     Item: ItemWrapper,
                     List: GalleryWrapper as any,
                 }}
-                itemContent={(index) => (<Paper sx={{margin: 0.5}}>
-                    <Skeleton variant="rectangular" width={"100%"} height={"auto"} sx={{
-                        aspectRatio: 1,
-                        borderTopLeftRadius: "inherit",
-                        borderTopRightRadius: "inherit",
-                    }}/>
-                    <Box sx={{padding: 0.5}}>
-                        <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
-                    </Box>
-                </Paper>)}
+                itemContent={(index, photo) => (
+                    <Paper sx={{margin: 0.5}}>
+                        <Skeleton variant="rectangular" width={"100%"} height={"auto"} sx={{
+                            aspectRatio: 1,
+                            borderTopLeftRadius: "inherit",
+                            borderTopRightRadius: "inherit",
+                        }}/>
+                        <Grid container sx={{p: 0.5, pr: 0, "& > *": {pr: 0.5}}}>
+                            <Grid xs={12} >
+                                <Typography
+                                    variant="body1"
+                                    overflow="hidden"
+                                    whiteSpace="nowrap"
+                                    textOverflow="ellipsis"
+                                >
+                                    {photo.photo_name}
+                                </Typography>
+                            </Grid>
+                            <Grid xs={6}>
+                                <Chip label={photo.author_name} size="small" sx={{width: "100%"}} />
+                            </Grid>
+                            <Grid xs={6}>
+                                <Chip label={photo.domain_name} size="small" sx={{width: "100%"}} />
+                            </Grid>
+                        </Grid>
+                    </Paper>
+                )}
             />
         </Stack>
     )
 }
-
-type Query =  SelectQueryBuilder<
-    DB,
-    "photos" | "author" | "domain",
-    {
-        photo_id: number,
-        photo_name: string,
-        author_name: string,
-        domain_name: string
-    }
->

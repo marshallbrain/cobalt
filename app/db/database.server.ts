@@ -1,4 +1,4 @@
-import {Kysely, PostgresDialect} from "kysely";
+import {Kysely, PostgresDialect, sql} from "kysely";
 import pg from "pg";
 import type {DB} from "~/db/types";
 import * as process from "process";
@@ -24,6 +24,8 @@ export const db = singleton("db", () => {
             .doNothing()
         )
         .execute().then()
+    sql`CREATE COLLATION IF NOT EXISTS custom_numeric (provider = icu, locale = 'en-u-kn-true')`
+        .execute(db).then()
 
     return db
 })

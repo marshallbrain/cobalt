@@ -16,10 +16,14 @@ export async function getMetadataStats(photoFile: string, photoPath: string) {
 
 export function validateMetadataJson(json: JsonData, titleFallback: string, ratingFav: number): Metadata {
 
+    let rating = parseInt(json.rating ?? "")
+    if (isNaN(rating)) rating = ratingFav
+    if (rating < 0) rating = 0
+
     return {
         photo_name: json.title ?? titleFallback,
         photo_author: json.artist ?? "",
-        photo_rating: parseInt(json.rating ?? "") || ratingFav,
+        photo_rating: rating,
         photo_domain: json.domain ?? "Raw",
         photo_source: json.source ?? "",
         created_at: json.createDate ?? ""
