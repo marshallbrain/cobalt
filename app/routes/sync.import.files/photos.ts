@@ -38,6 +38,8 @@ export default async function importPhoto(
     if (dataFile) {
         json = JSON.parse(await fs.readFile(path.join(filePath, dataFile), {encoding: 'utf8'}))
 
+        json = Object.fromEntries(Object.entries(json).map(([key, value]) => [key.toLowerCase(), value]))
+
         data = {
             name: dataFile,
             props: {
@@ -66,6 +68,10 @@ export default async function importPhoto(
 
     const photoStats = await fs.stat(path.join(filePath, fileName))
     const photoData = await sharp(path.join(filePath, fileName)).metadata()
+
+    if(!Date.parse(metadata.created_at)) {
+        metadata.created_at = photoStats.birthtime.toISOString()
+    }
 
     // generateThumbnails(path.join(fileName, filePath))
 
@@ -133,7 +139,7 @@ async function createPhotoEntry(
             ...values,
             photo_width: photo.width,
             photo_height: photo.height,
-            photo_type: photo.name,
+            photo_type: path.extname(photo.name),
             author_id: authorId,
             domain_id: domainId
         })

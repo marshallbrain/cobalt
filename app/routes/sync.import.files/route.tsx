@@ -32,7 +32,7 @@ export async function action({
     if (!originals) json({ok: false})
     readdir(
         path.join(originals ?? "", folder as string),
-        {withFileTypes: true}
+        {withFileTypes: true, recursive: true}
     ).then(async files => {
         files = files.filter(file => file.isFile() && isPhoto(file.name))
         const total = files.length

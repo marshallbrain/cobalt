@@ -4,14 +4,18 @@ import {db} from "~/db/database.server";
 
 export async function getMetadataStats(photoFile: string, photoPath: string) {
     const dataFile = photoFile.concat(".json")
-    const fallback = photoFile.replace(path.extname(photoFile), "")
+    const fallback = photoFile.replace(path.extname(photoFile), ".json")
 
-    return await fs.stat(path.join(photoPath, dataFile))
-            .then((stats) => ({dataStats: stats, dataFile: dataFile}))
-            .catch(() => null) ??
-        fs.stat(path.join(photoPath, fallback))
-            .then((stats) => ({dataStats: stats, dataFile: fallback}))
-            .catch(() => ({dataStats: undefined, dataFile: undefined}))
+    const dataPath = path.join(photoPath, dataFile)
+    const fallPath = path.join(photoPath, fallback)
+
+    const data = await fs.stat(dataPath)
+        .then((stats) => ({dataStats: stats, dataFile: dataFile}))
+        .catch(() => null)
+
+    return data ?? fs.stat(fallPath)
+        .then((stats) => ({dataStats: stats, dataFile: fallback}))
+        .catch(() => ({dataStats: undefined, dataFile: undefined}))
 }
 
 export function validateMetadataJson(json: JsonData, titleFallback: string, ratingFav: number): Metadata {
