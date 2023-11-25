@@ -8,7 +8,9 @@ import {sql} from "kysely";
 
 export const meta: MetaFunction = () => {return [{ title: "Search" }]}
 
-const regex = /"(.+)"|(\w+)/g
+const searchRegex = /([\^!]?"[\w\s.*]+"%?)|([\^!]?[\w.*]+%?)|(\$\w+\s?[^$]*)/g
+const filterTypeRegex = /\$(\w+!?)/g
+const filterRegex = /([\^!]?"[\w\s.*]+"%?)|\s([\^!]?[\w.*]+%?)/g
 
 export async function loader({
     request,
@@ -30,16 +32,40 @@ export async function loader({
     if (isNaN(offset) || isNaN(limit)) throw 500
 
     query = query.offset(offset).limit(limit)
+    console.log(query.compile())
     const photoEntries = await query.execute()
 
     return json(photoEntries)
 }
 
 function querySearch(query: Query, search: string) {
-    const terms = [...search.matchAll(regex)].map(term => term[1] || term[2])
+    const {terms, groups} = [...search.matchAll(searchRegex)]
+        .map(term => term[1] || term[2] || term[3])
+        .reduce(({terms, groups}, value): {terms: string[], groups: string[]} => {
+            if (value.startsWith("$")) return {terms: [...terms], groups: [...groups, value.trim()]}
+            return {terms: [...terms, value.replaceAll("\"", "")], groups: [...groups]}
+        }, {terms: [], groups: []} as {terms: string[], groups: string[]})
+
+    const filters = groups.reduce((prev, value) => {
+        const filter = [...value.matchAll(filterTypeRegex)].map(term => term[1])[0]
+        if (!filter) return prev
+        if (!(filter.replace("!", "") in validFilters)) return prev
+        if (filter.endsWith("!")) return {...prev, [filter.replace("!", "")]: ["!"]}
+
+        return {
+            ...prev,
+            [filter]: [...value.matchAll(filterRegex)]
+                .map(term => term[1] || term[2] || term[3])
+        }
+    }, {} as {[index: string]: string[]})
+
     terms.forEach(term => {
-        query = query.where("photo_name", "like", "%".concat(term, "%"))
+        query = query.where("photo_name", "ilike", "%".concat(term, "%"))
     })
+    Object.entries(filters).forEach(filter => {
+        query = query.where("author.author_id", "=", validFilters[filter[0]](filter[1]))
+    })
+
     return query
 }
 
@@ -51,6 +77,15 @@ function queryOrder(query: Query, order: string, dir: boolean) {
         default:
             return query.orderBy("photo_name", naturalDir)
     }
+}
+
+const validFilters: {[index: string]: (values: string[]) => SelectQueryBuilder<DB, any, any>} = {
+    "author": (values: string[]) => db.selectFrom("author")
+        .select("author_id")
+        .where("author_name", "like", values),
+    "domain": (values: string[]) => db.selectFrom("domain")
+        .select("domain_id")
+        .where("domain_name", "like", values),
 }
 
 type Query =  SelectQueryBuilder<
