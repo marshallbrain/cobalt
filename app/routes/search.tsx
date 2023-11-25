@@ -24,7 +24,12 @@ export async function loader({
     query = query.where("photo_rating", "<=", parseInt(params.get("rating") ?? "0"))
     query = queryOrder(query, params.get("sort") ?? "name", params.has("order", "true"))
 
-    query = query.offset(0).limit(16)
+    const offset = parseInt(params.get("offset") || "")
+    const limit = parseInt(params.get("limit") || "")
+
+    if (isNaN(offset) || isNaN(limit)) throw 500
+
+    query = query.offset(offset).limit(limit)
     const photoEntries = await query.execute()
 
     return json(photoEntries)

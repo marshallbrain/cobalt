@@ -3,7 +3,7 @@ import SearchBar from "~/components/SearchBar";
 import {useFetcher, useSearchParams, useSubmit} from "@remix-run/react";
 import { VirtuosoGrid } from 'react-virtuoso';
 import {Box, Chip, Unstable_Grid2 as Grid, Paper, Skeleton, Stack, Typography, styled} from "@mui/material";
-import {loader} from "~/routes/search";
+import type {loader} from "~/routes/search";
 
 const ItemWrapper = styled("div")(theme => ({
     flexBasis: 100/6 + "%",
@@ -17,6 +17,14 @@ const GalleryWrapper = styled("div")(({theme}) => ({
     flexWrap: "wrap"
 }))
 
+const Img = styled("img")(({theme}) => ({
+    aspectRatio: 1,
+    borderTopLeftRadius: "inherit",
+    borderTopRightRadius: "inherit",
+    width: "100%",
+    height: "auto",
+}))
+
 export default function Gallery() {
     const [search] = useSearchParams()
     const [photos, setPhotos] = useState<Exclude<typeof fetcher.data, undefined>>([])
@@ -24,8 +32,12 @@ export default function Gallery() {
     const fetcher = useFetcher<typeof loader>()
     const setSearch = useSubmit()
 
-    const loadMore = useCallback(() => {
-        if (fetcher.state == "idle") fetcher.load("/search?" + new URLSearchParams(search))
+    const loadMore = useCallback((offset: number) => {
+        if (fetcher.state == "idle") fetcher.load("/search?" + new URLSearchParams({
+            ...Object.fromEntries(search.entries()),
+            "offset": offset.toString(),
+            "limit": "24"
+        }))
     }, [fetcher, search])
 
     useEffect(() => {
@@ -41,7 +53,7 @@ export default function Gallery() {
     useEffect(() => {
         if (!hydrate) {
             setHydrate(true)
-            loadMore()
+            loadMore(0)
         }
     }, [hydrate, loadMore])
 
@@ -64,11 +76,12 @@ export default function Gallery() {
                 }}
                 itemContent={(index, photo) => (
                     <Paper sx={{margin: 0.5}}>
-                        <Skeleton variant="rectangular" width={"100%"} height={"auto"} sx={{
+                        {/*<Skeleton variant="rectangular" width={"100%"} height={"auto"} sx={{
                             aspectRatio: 1,
                             borderTopLeftRadius: "inherit",
                             borderTopRightRadius: "inherit",
-                        }}/>
+                        }}/>*/}
+                        <Img alt={""} src={"/photo/" + photo.photo_id} />
                         <Grid container sx={{p: 0.5, pr: 0, "& > *": {pr: 0.5}}}>
                             <Grid xs={12} >
                                 <Typography
