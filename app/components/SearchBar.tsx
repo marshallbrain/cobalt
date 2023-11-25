@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     AppBar,
     Box,
@@ -14,6 +14,8 @@ import {
     Toolbar,
     Divider,
     Stack,
+    Popover,
+    Typography,
 } from "@mui/material";
 import SearchRounded from "~/components/icons/SearchRounded";
 import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
@@ -46,16 +48,21 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     color: theme.palette.common.white,
     width: '100%',
     '& .MuiInputBase-input': {
-        padding: theme.spacing(1, 1, 1, 0),
-        paddingLeft: `calc(1em + ${theme.spacing(2)})`,
+        padding: theme.spacing(1, 1, 1, 2),
+        marginLeft: `calc(1em)`,
         width: '100%',
     },
+}))
+
+const ExistingQuery = styled("span")(({ theme }) => ({
+    color: theme.palette.text.disabled
 }))
 
 export default function SearchBar (props: PropTypes) {
     const {search, onSearch} = props
     const [query, setQuery] = useState(search.query ?? "")
     const [options, setOptions] = useState(false)
+    const [fieldAnchor, setFieldAnchor] = React.useState<null | HTMLElement>(null)
     const fetcher = useFetcher<typeof loader>({key: "settings"})
 
     useEffect(() => {
@@ -66,6 +73,7 @@ export default function SearchBar (props: PropTypes) {
 
     const updateQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
         setQuery(event.target.value)
+        setFieldAnchor(event.currentTarget)
     }
 
     const updateOptions = (option: Partial<Omit<SearchQuery, "query">>) => {
@@ -79,6 +87,7 @@ export default function SearchBar (props: PropTypes) {
         })
     }
 
+
     return (
         <AppBar position="static">
             <Toolbar>
@@ -90,9 +99,11 @@ export default function SearchBar (props: PropTypes) {
                         placeholder="Search"
                         value={query}
                         onChange={updateQuery}
+                        onBlur={() => {console.log("unselected")}}
                         onKeyDown={(event) => {
                             if (event.key === "Enter") {
                                 event.preventDefault()
+                                event.currentTarget.blur()
                                 onSearch({
                                     ...search,
                                     query
@@ -101,6 +112,24 @@ export default function SearchBar (props: PropTypes) {
                         }}
                     />
                 </Search>
+                <Popover
+                    open={Boolean(fieldAnchor)}
+                    anchorEl={fieldAnchor}
+                    onClose={() => setFieldAnchor(null)}
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                    }}
+                    disableAutoFocus
+                    disableEnforceFocus
+                >
+                    <Typography sx={{px: 2, py: 1}}>
+                        <ExistingQuery>
+                            {query.substring(0, query.lastIndexOf(" "))}
+                        </ExistingQuery>
+                        {query.substring(query.lastIndexOf(" "))}
+                    </Typography>
+                </Popover>
                 <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                     <IconButton size="large" color="inherit" onClick={() => {setOptions(!options)}}>
                         {(options)? <ExpandLessRounded/>: <ExpandMoreRounded/>}
