@@ -32,7 +32,6 @@ export async function loader({
     if (isNaN(offset) || isNaN(limit)) throw 500
 
     query = query.offset(offset).limit(limit)
-    console.log(query.compile())
     const photoEntries = await query.execute()
 
     return json(photoEntries)

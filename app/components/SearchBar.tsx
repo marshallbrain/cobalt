@@ -58,22 +58,50 @@ const ExistingQuery = styled("span")(({ theme }) => ({
     color: theme.palette.text.disabled
 }))
 
+const SuggestField = styled("span")(({ theme }) => ({
+    color: theme.palette.secondary.main
+}))
+
+const SuggestWord = styled("span")(({ theme }) => ({
+    color: theme.palette.primary.main
+}))
+
+const fieldRegex = /\$(\w+)\s(?:\w+\s?)*$/
+const fromRegex = /(\w+)$/
+
 export default function SearchBar (props: PropTypes) {
     const {search, onSearch} = props
     const [query, setQuery] = useState(search.query ?? "")
     const [options, setOptions] = useState(false)
-    const [fieldAnchor, setFieldAnchor] = React.useState<null | HTMLElement>(null)
-    const fetcher = useFetcher<typeof loader>({key: "settings"})
+    const [suggestAnchor, setSuggestAnchor] = React.useState<null | HTMLElement>(null)
+    const [suggestions, setSuggestions] = useState<string[]>([])
+    const [suggestField, setSuggestField] = useState("")
+    const [suggestFrom, setSuggestFrom] = useState<{word: string, line: string}>({word: "", line: ""})
+    const settingsFetcher = useFetcher<typeof loader>({key: "settings"})
+    const suggestFetcher = useFetcher()
 
     useEffect(() => {
-        if (fetcher.state === 'idle' && !fetcher.data) {
-            fetcher.load("/settings")
+        if (settingsFetcher.state === 'idle' && !settingsFetcher.data) {
+            settingsFetcher.load("/settings")
         }
-    }, [fetcher.state, fetcher.data, fetcher])
+    }, [settingsFetcher.state, settingsFetcher.data, settingsFetcher])
 
-    const updateQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setQuery(event.target.value)
-        setFieldAnchor(event.currentTarget)
+    const updateQuery = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+        const value = event.target.value
+        setQuery(value)
+
+        if (!event.target.selectionStart) return null
+        const line = value.substring(0, event.target.selectionStart)
+
+        const field = line.match(fieldRegex)
+        if (!field) return null
+
+        const from = line.match(fromRegex)
+        if (!from) return null
+
+        setSuggestField(field[1])
+        setSuggestFrom({word: from[1], line})
+        return event.currentTarget
     }
 
     const updateOptions = (option: Partial<Omit<SearchQuery, "query">>) => {
@@ -98,24 +126,22 @@ export default function SearchBar (props: PropTypes) {
                     <StyledInputBase
                         placeholder="Search"
                         value={query}
-                        onChange={updateQuery}
+                        onChange={event => setSuggestAnchor(updateQuery(event))}
                         onBlur={() => {console.log("unselected")}}
-                        onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                                event.preventDefault()
-                                event.currentTarget.blur()
-                                onSearch({
-                                    ...search,
-                                    query
-                                })
-                            }
-                        }}
+                        onKeyDown={(event) => {if (event.key === "Enter") {
+                            event.preventDefault()
+                            event.currentTarget.blur()
+                            onSearch({
+                                ...search,
+                                query
+                            })
+                        }}}
                     />
                 </Search>
                 <Popover
-                    open={Boolean(fieldAnchor)}
-                    anchorEl={fieldAnchor}
-                    onClose={() => setFieldAnchor(null)}
+                    open={Boolean(suggestAnchor)}
+                    anchorEl={suggestAnchor}
+                    onClose={() => setSuggestAnchor(null)}
                     anchorOrigin={{
                         vertical: 'bottom',
                         horizontal: 'left',
@@ -123,12 +149,19 @@ export default function SearchBar (props: PropTypes) {
                     disableAutoFocus
                     disableEnforceFocus
                 >
-                    <Typography sx={{px: 2, py: 1}}>
+                    {Boolean(suggestAnchor) && <Typography sx={{px: 2, py: 1}}>
                         <ExistingQuery>
-                            {query.substring(0, query.lastIndexOf(" "))}
+                            {query.substring(0, suggestFrom.line.lastIndexOf("$" + suggestField))}
                         </ExistingQuery>
-                        {query.substring(query.lastIndexOf(" "))}
-                    </Typography>
+                        <SuggestField>{"$" + suggestField}</SuggestField>
+                        <ExistingQuery>
+                            {query.substring(
+                                suggestFrom.line.lastIndexOf("$" + suggestField) + "$".concat(suggestField).length,
+                                suggestFrom.line.lastIndexOf(suggestFrom.word)
+                            )}
+                        </ExistingQuery>
+                        <SuggestWord>{suggestFrom.word}</SuggestWord>
+                    </Typography>}
                 </Popover>
                 <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                     <IconButton size="large" color="inherit" onClick={() => {setOptions(!options)}}>
@@ -170,10 +203,10 @@ export default function SearchBar (props: PropTypes) {
                                     updateOptions({rating: event.target.value as number})
                                 }}
                             >
-                                {fetcher.data?.ratings.map((value, index) => (
+                                {settingsFetcher.data?.ratings.map((value, index) => (
                                     <MenuItem key={index} value={index}>{value}</MenuItem>
                                 ))}
-                                <MenuItem value={fetcher.data?.ratings.length ?? 0}>All</MenuItem>
+                                <MenuItem value={settingsFetcher.data?.ratings.length ?? 0}>All</MenuItem>
                             </Select>
                         </FormControl>
                     </Grid>
