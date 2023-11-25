@@ -1,8 +1,8 @@
-import React, {forwardRef, useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import SearchBar from "~/components/SearchBar";
 import {useFetcher, useSearchParams, useSubmit} from "@remix-run/react";
 import { VirtuosoGrid } from 'react-virtuoso';
-import {Box, Chip, Unstable_Grid2 as Grid, Paper, Skeleton, Stack, Typography, styled} from "@mui/material";
+import {Chip, Unstable_Grid2 as Grid, Paper, Stack, Typography, styled} from "@mui/material";
 import type {loader} from "~/routes/search";
 
 const ItemWrapper = styled("div")(theme => ({
@@ -23,6 +23,7 @@ const Img = styled("img")(({theme}) => ({
     borderTopRightRadius: "inherit",
     width: "100%",
     height: "auto",
+    marginBottom: theme.spacing(-1)
 }))
 
 export default function Gallery() {
@@ -33,11 +34,11 @@ export default function Gallery() {
     const setSearch = useSubmit()
 
     const loadMore = useCallback((offset: number) => {
-        if (fetcher.state == "idle") fetcher.load("/search?" + new URLSearchParams({
+        if (fetcher.state == "idle") fetcher.load("/search?".concat(new URLSearchParams({
             ...Object.fromEntries(search.entries()),
             "offset": offset.toString(),
             "limit": "24"
-        }))
+        }).toString()))
     }, [fetcher, search])
 
     useEffect(() => {
@@ -76,12 +77,17 @@ export default function Gallery() {
                 }}
                 itemContent={(index, photo) => (
                     <Paper sx={{margin: 0.5}}>
-                        {/*<Skeleton variant="rectangular" width={"100%"} height={"auto"} sx={{
-                            aspectRatio: 1,
-                            borderTopLeftRadius: "inherit",
-                            borderTopRightRadius: "inherit",
-                        }}/>*/}
-                        <Img alt={""} src={"/photo/" + photo.photo_id} />
+                        <Img
+                            alt={""}
+                            src={"/photo/".concat(
+                                photo.photo_id.toString(),
+                                ".jpg?",
+                                new URLSearchParams({
+                                    w: "500",
+                                }).toString()
+                            )}
+                            loading="lazy"
+                        />
                         <Grid container sx={{p: 0.5, pr: 0, "& > *": {pr: 0.5}}}>
                             <Grid xs={12} >
                                 <Typography
