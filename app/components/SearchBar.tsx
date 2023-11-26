@@ -24,7 +24,8 @@ import ArrowDownwardRounded from "~/components/icons/ArrowDownwardRounded";
 import ArrowUpwardRounded from "~/components/icons/ArrowUpwardRounded";
 import type {SubmitFunction} from "@remix-run/react";
 import {useFetcher} from "@remix-run/react";
-import {loader} from "~/routes/settings";
+import type {loader as settingsLoader} from "~/routes/settings";
+import type {loader as suggestionsLoader} from "~/routes/suggestions";
 
 const Search = styled('div')(({ theme }) => ({
     position: "relative",
@@ -74,11 +75,12 @@ export default function SearchBar (props: PropTypes) {
     const [query, setQuery] = useState(search.query ?? "")
     const [options, setOptions] = useState(false)
     const [suggestAnchor, setSuggestAnchor] = React.useState<null | HTMLElement>(null)
-    const [suggestions, setSuggestions] = useState<string[]>([])
+    const [suggestions, setSuggestions] = useState<Suggestions>({from: "", values: []})
     const [suggestField, setSuggestField] = useState("")
     const [suggestFrom, setSuggestFrom] = useState<{word: string, line: string}>({word: "", line: ""})
-    const settingsFetcher = useFetcher<typeof loader>({key: "settings"})
-    const suggestFetcher = useFetcher()
+    const [sentSuggest, setSentSuggest] = useState(false)
+    const settingsFetcher = useFetcher<typeof settingsLoader>({key: "settings"})
+    const suggestFetcher = useFetcher<typeof suggestionsLoader>()
 
     useEffect(() => {
         if (settingsFetcher.state === 'idle' && !settingsFetcher.data) {
@@ -86,7 +88,20 @@ export default function SearchBar (props: PropTypes) {
         }
     }, [settingsFetcher.state, settingsFetcher.data, settingsFetcher])
 
-    const updateQuery = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    useEffect(() => {
+        if (suggestions.from === suggestFrom.word) return
+        if (sentSuggest && suggestFetcher.state == "idle" && suggestFetcher.data) {
+            setSuggestions({from: suggestFrom.word, values: suggestFetcher.data})
+        }
+        if (!sentSuggest && suggestFetcher.state == "idle") {
+            suggestFetcher.load("/suggestions?".concat(new URLSearchParams({
+                field: suggestField, from: suggestFrom.word
+            }).toString()))
+            setSentSuggest(true)
+        }
+    }, [sentSuggest, suggestFetcher, suggestField, suggestFrom.word, suggestions.from])
+
+    const updateQuery = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = event.target.value
         setQuery(value)
 
@@ -94,14 +109,19 @@ export default function SearchBar (props: PropTypes) {
         const line = value.substring(0, event.target.selectionStart)
 
         const field = line.match(fieldRegex)
-        if (!field) return null
-
         const from = line.match(fromRegex)
-        if (!from) return null
+        if (!field || !from) {
+            setSuggestAnchor(null)
+            return
+        }
+
+        if (!suggestAnchor)
+            setSuggestions({from: "", values: []})
 
         setSuggestField(field[1])
         setSuggestFrom({word: from[1], line})
-        return event.currentTarget
+        setSentSuggest(false)
+        return setSuggestAnchor(event.currentTarget)
     }
 
     const updateOptions = (option: Partial<Omit<SearchQuery, "query">>) => {
@@ -126,7 +146,7 @@ export default function SearchBar (props: PropTypes) {
                     <StyledInputBase
                         placeholder="Search"
                         value={query}
-                        onChange={event => setSuggestAnchor(updateQuery(event))}
+                        onChange={updateQuery}
                         onBlur={() => {console.log("unselected")}}
                         onKeyDown={(event) => {if (event.key === "Enter") {
                             event.preventDefault()
@@ -139,7 +159,7 @@ export default function SearchBar (props: PropTypes) {
                     />
                 </Search>
                 <Popover
-                    open={Boolean(suggestAnchor)}
+                    open={Boolean(suggestAnchor) && suggestions.values.length > 0}
                     anchorEl={suggestAnchor}
                     onClose={() => setSuggestAnchor(null)}
                     anchorOrigin={{
@@ -149,19 +169,21 @@ export default function SearchBar (props: PropTypes) {
                     disableAutoFocus
                     disableEnforceFocus
                 >
-                    {Boolean(suggestAnchor) && <Typography sx={{px: 2, py: 1}}>
-                        <ExistingQuery>
-                            {query.substring(0, suggestFrom.line.lastIndexOf("$" + suggestField))}
-                        </ExistingQuery>
-                        <SuggestField>{"$" + suggestField}</SuggestField>
-                        <ExistingQuery>
-                            {query.substring(
-                                suggestFrom.line.lastIndexOf("$" + suggestField) + "$".concat(suggestField).length,
-                                suggestFrom.line.lastIndexOf(suggestFrom.word)
-                            )}
-                        </ExistingQuery>
-                        <SuggestWord>{suggestFrom.word}</SuggestWord>
-                    </Typography>}
+                    {suggestions.values.map(({value}) => (
+                        <Typography sx={{px: 2, py: 1}} key={value}>
+                            <ExistingQuery>
+                                {query.substring(0, suggestFrom.line.lastIndexOf("$" + suggestField))}
+                            </ExistingQuery>
+                            <SuggestField>{"$" + suggestField}</SuggestField>
+                            <ExistingQuery>
+                                {query.substring(
+                                    suggestFrom.line.lastIndexOf("$" + suggestField) + "$".concat(suggestField).length,
+                                    suggestFrom.line.lastIndexOf(suggestFrom.word)
+                                )}
+                            </ExistingQuery>
+                            <SuggestWord>{value}</SuggestWord>
+                        </Typography>
+                    ))}
                 </Popover>
                 <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                     <IconButton size="large" color="inherit" onClick={() => {setOptions(!options)}}>
@@ -214,6 +236,11 @@ export default function SearchBar (props: PropTypes) {
             </Collapse>
         </AppBar>
     )
+}
+
+interface Suggestions {
+    from: string
+    values: {value: string}[]
 }
 
 interface PropTypes {
