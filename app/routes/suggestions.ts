@@ -7,21 +7,21 @@ export async function loader({
     request,
 }: LoaderFunctionArgs) {
     const params = new URL(request.url).searchParams
-    const field = params.get("field")
     const from = params.get("from")
+    const field = params.get("field")
 
-    if (!from) return json([])
-    if (!field) return json([])
-    if (field.length > 0 && !(field in fields)) return json([])
+    if (!from) throw 400
+    if (!field) return json(Object.keys(fields)
+        .filter(value => value.startsWith(from.substring(1)))
+        .map(value => ({label: value})))
 
-    if (field.length == 0) return json([])
-
-    const suggestions = await fields[field as keyof typeof fields](from).execute()
+    const suggestions = await fields[field as keyof typeof fields](from)
     return json(suggestions)
 }
 
 const fields = {
     "author": (from: string) => db.selectFrom("author")
-        .select("author_name as value")
-        .where("author_name", "ilike", from.concat("%"))
+        .select("author_name as label")
+        .where("author_name", "ilike", from.concat("%")).execute(),
+    "domain": (from: string) => []
 }
