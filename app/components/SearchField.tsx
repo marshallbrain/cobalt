@@ -19,6 +19,7 @@ import {SearchQuery} from "~/components/SearchBar";
 
 const fieldRegex = /\$(\w+)\s(?:\w+\s?)*$/
 const fromRegex = /\$?(\w*)$/
+const replaceFromRegex = /(\w*)$/
 
 const Search = styled('div')(({ theme }) => ({
     position: "relative",
@@ -67,6 +68,7 @@ const SuggestWord = styled("span")(({ theme }) => ({
 export default function SearchField (props: PropTypes) {
     const {search, onSearch} = props
     const [query, setQuery] = useState(search.query ?? "")
+    const [subquery, setSubquery] = useState<Subquery>({index: 0, from: ""})
     const [suggestions, setSuggestions] = useState<{label: string}[]>([])
     const [pendingFetch, setPendingFetch] = useState<string|undefined>(undefined)
     const suggestFetcher = useFetcher<typeof suggestionsLoader>()
@@ -77,15 +79,26 @@ export default function SearchField (props: PropTypes) {
             setSuggestions(suggestFetcher.data)
         }
         if (pendingFetch) {
-            suggestFetcher.load("/suggestions?".concat(new URLSearchParams({
-                from: pendingFetch
-            }).toString()))
+            const splitIndex = pendingFetch.lastIndexOf(":")
+            suggestFetcher.load("/suggestions?".concat(new URLSearchParams((splitIndex)?
+                {from: pendingFetch.substring(0, splitIndex), field: pendingFetch.substring(splitIndex+1)}:
+                {from: pendingFetch}
+            ).toString()))
             setPendingFetch(undefined)
         }
     }, [pendingFetch, suggestFetcher])
 
+    const autoComplete = (event: SyntheticEvent<Element, Event>, value: string | {label: string} | null) => {
+        if (!value) return
+        const substring = query.substring(0, subquery.index)
+            .replace(replaceFromRegex, (value as {label: string}).label)
+
+        setQuery(substring.concat(query.substring(subquery.index)))
+    }
+
     const updateQuery: UpdateQuery = (onChange) => (event) => {
         if (onChange) onChange(event)
+        setQuery(event.target.value)
 
         const value = event.target.value.substring(0, event.target.selectionStart || 0)
         const fromValue = value.match(fromRegex)
@@ -93,7 +106,19 @@ export default function SearchField (props: PropTypes) {
         if (!fromValue || !fromValue[0]) return setSuggestions([])
         if (fromValue[0].startsWith("$")) {
             setPendingFetch("$".concat(fromValue[1]))
+            setSubquery({
+                index: event.target.selectionStart || 0,
+                from: value.substring(0, value.lastIndexOf(fromValue[0]))
+            })
+            return
         }
+        if (!fieldValue || !fieldValue[0]) return setSuggestions([])
+        setPendingFetch(fromValue[1].concat(":", fieldValue[1]))
+        setSubquery({
+            index: event.target.selectionStart || 0,
+            from: value.substring(value.lastIndexOf(fieldValue[0]), value.lastIndexOf(fromValue[0])),
+            field: value.substring(0, value.lastIndexOf(fieldValue[0]))
+        })
     }
 
     return (
@@ -105,6 +130,9 @@ export default function SearchField (props: PropTypes) {
                 disablePortal
                 freeSolo
                 options={suggestions}
+                value={{label: query || ""}}
+                inputValue={query}
+                onChange={autoComplete}
                 PaperComponent={AutocompletePaper}
                 filterOptions={(x) => x}
                 renderInput={(params) => (
@@ -113,14 +141,15 @@ export default function SearchField (props: PropTypes) {
                         inputProps={params.inputProps}
                         placeholder="Search"
                         onChange={updateQuery(params.inputProps.onChange)}
+                        onKeyDown={(event) => {if (event.key === "Enter") {
+                            console.log(suggestions.length == 0)
+                            // if (suggestions.length == 0) onSearch({
+                            //     ...search,
+                            //     query
+                            // })
+                        }}}
                     />
                 )}
-                onKeyDown={(event) => {if (event.key === "Enter") {
-                    onSearch({
-                        ...search,
-                        query
-                    })
-                }}}
             />
         </Search>
     )
@@ -129,6 +158,12 @@ export default function SearchField (props: PropTypes) {
 type UpdateQuery =
     (onChange: ChangeEventHandler<HTMLInputElement> | undefined) =>
         (event: React.ChangeEvent<HTMLInputElement>) => void
+
+interface Subquery {
+    index: number,
+    from: string,
+    field?: string
+}
 
 interface Suggestions {
     from: string

@@ -22,6 +22,5 @@ export async function loader({
 const fields = {
     "author": (from: string) => db.selectFrom("author")
         .select("author_name as label")
-        .where("author_name", "ilike", from.concat("%")).execute(),
-    "domain": (from: string) => []
+        .where("author_name", "ilike", from.concat("%")).execute()
 }
