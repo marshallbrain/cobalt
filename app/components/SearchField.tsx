@@ -58,15 +58,15 @@ function PopperComponent(props: PopperProps) {
     return <AutocompletePopper {...props} placement={"bottom-start"}/>;
 }
 
-const ExistingQuery = styled("span")(({ theme }) => ({
+const ExistingQuerySpan = styled("span")(({ theme }) => ({
     color: theme.palette.text.disabled
 }))
 
-const SuggestField = styled("span")(({ theme }) => ({
+const SuggestFieldSpan = styled("span")(({ theme }) => ({
     color: theme.palette.secondary.main
 }))
 
-const SuggestWord = styled("span")(({ theme }) => ({
+const SuggestWordSpan = styled("span")(({ theme }) => ({
     color: theme.palette.primary.main
 }))
 
@@ -82,6 +82,7 @@ export default function SearchField (props: PropTypes) {
         if (suggestFetcher.state != "idle") return
         if (suggestFetcher.data) {
             setSuggestions(suggestFetcher.data)
+            suggestFetcher.data = undefined
         }
         // console.log(pendingFetch, "-")
         if (pendingFetch) {
@@ -94,10 +95,9 @@ export default function SearchField (props: PropTypes) {
         }
     }, [pendingFetch, subquery, suggestFetcher])
 
-    const autoComplete = (event: SyntheticEvent<Element, Event>, value: string | {label: string} | null) => {
+    const autoComplete = (event: SyntheticEvent<Element, Event>, value: string | Suggestions | null) => {
         if (!value) return
-        const substring = query.substring(0, subquery.index)
-            .replace(replaceFromRegex, (value as {label: string}).label)
+        const substring = query.substring(0, subquery.index).replace(replaceFromRegex, (value as Suggestions).label)
 
         setSuggestions([])
         setQuery(substring.concat(query.substring(subquery.index)))
@@ -143,19 +143,29 @@ export default function SearchField (props: PropTypes) {
                 onChange={autoComplete}
                 PopperComponent={PopperComponent}
                 filterOptions={(x) => x}
-                renderOption={(props, option) => (
-                    <Box component="li" {...props}>
-                        <Chip label={option.label}/>
+                renderOption={(props, option) => {
+                    const existingQuery = subquery.field
+                    const fieldMatch = subquery.from.match(fieldRegex)
+                    const field = fieldMatch && "$" + fieldMatch[1]
+                    const otherLabels = (field)? subquery.from.replace(field, ""): subquery.from
+
+                    return <Box component="li" {...props}>
+                        <Typography>
+                            {existingQuery && (<ExistingQuerySpan>{existingQuery}</ExistingQuerySpan>)}
+                            {field && (<SuggestFieldSpan>{field}</SuggestFieldSpan>)}
+                            {otherLabels && (<ExistingQuerySpan>{otherLabels}</ExistingQuerySpan>)}
+                            <SuggestWordSpan>{((!field)? "$": "") + option.label}</SuggestWordSpan>
+                        </Typography>
                         {option.count && <>
                             <Box sx={{pl: 2, flexGrow: 1}}/>
                             <Typography variant="body2" color="text.secondary">{option.count}</Typography>
                         </>}
                     </Box>
-                )}
+                }}
                 renderInput={(params) => (
                     <form onSubmit={event => {
                         event.preventDefault()
-                        console.log("search")
+                        setSuggestions([])
                         onSearch({
                             ...search,
                             query
@@ -166,6 +176,9 @@ export default function SearchField (props: PropTypes) {
                             inputProps={params.inputProps}
                             placeholder="Search"
                             type="text"
+                            onSubmit={event => {
+                                console.log("search")
+                            }}
                             onChange={updateQuery(params.inputProps.onChange)}
                         />
                     </form>
