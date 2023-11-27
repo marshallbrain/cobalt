@@ -153,18 +153,22 @@ export default function SearchField (props: PropTypes) {
                     </Box>
                 )}
                 renderInput={(params) => (
-                    <AutocompleteInput
-                        ref={params.InputProps.ref}
-                        inputProps={params.inputProps}
-                        placeholder="Search"
-                        onChange={updateQuery(params.inputProps.onChange)}
-                        onKeyDown={(event) => {if (event.key === "Enter") {
-                            // if (suggestions.length == 0) onSearch({
-                            //     ...search,
-                            //     query
-                            // })
-                        }}}
-                    />
+                    <form onSubmit={event => {
+                        event.preventDefault()
+                        console.log("search")
+                        onSearch({
+                            ...search,
+                            query
+                        })
+                    }}>
+                        <AutocompleteInput
+                            ref={params.InputProps.ref}
+                            inputProps={params.inputProps}
+                            placeholder="Search"
+                            type="text"
+                            onChange={updateQuery(params.inputProps.onChange)}
+                        />
+                    </form>
                 )}
             />
         </Search>

@@ -12,7 +12,7 @@ export async function loader({
 
     if (!from && from !== "") throw 400
     if (!field) return json(Object.keys(fields)
-        .filter(value => value.startsWith(from.substring(1)))
+        .filter(value => value.startsWith(from.substring(1)) && value !== from.substring(1))
         .map(value => ({label: value})))
 
     const suggestions = await fields[field as keyof typeof fields](from)
