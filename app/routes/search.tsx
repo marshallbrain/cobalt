@@ -32,6 +32,7 @@ export async function loader({
     if (isNaN(offset) || isNaN(limit)) throw 500
 
     query = query.offset(offset).limit(limit)
+    console.log(query.compile())
     const photoEntries = await query.execute()
 
     return json(photoEntries)
@@ -62,7 +63,7 @@ function querySearch(query: Query, search: string) {
         query = query.where("photo_name", "ilike", "%".concat(term, "%"))
     })
     Object.entries(filters).forEach(filter => {
-        query = query.where("author.author_id", "=", validFilters[filter[0]](filter[1]))
+        query = query.where("author.author_id", "in", validFilters[filter[0]](filter[1]))
     })
 
     return query
@@ -81,7 +82,9 @@ function queryOrder(query: Query, order: string, dir: boolean) {
 const validFilters: {[index: string]: (values: string[]) => SelectQueryBuilder<DB, any, any>} = {
     "author": (values: string[]) => db.selectFrom("author")
         .select("author_id")
-        .where("author_name", "like", values),
+        .where(eb => eb.or(values.map(value => {
+            return eb("author_name", "like", value)
+        }))),
     "domain": (values: string[]) => db.selectFrom("domain")
         .select("domain_id")
         .where("domain_name", "like", values),
