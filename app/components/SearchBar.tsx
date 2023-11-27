@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     AppBar,
     Box,
@@ -14,6 +14,8 @@ import {
     Toolbar,
     Divider,
     Stack,
+    Popover,
+    Typography,
 } from "@mui/material";
 import SearchRounded from "~/components/icons/SearchRounded";
 import ExpandMoreRounded from "~/components/icons/ExpandMoreRounded";
@@ -22,85 +24,33 @@ import ArrowDownwardRounded from "~/components/icons/ArrowDownwardRounded";
 import ArrowUpwardRounded from "~/components/icons/ArrowUpwardRounded";
 import type {SubmitFunction} from "@remix-run/react";
 import {useFetcher} from "@remix-run/react";
-import {loader} from "~/routes/settings";
-
-const Search = styled('div')(({ theme }) => ({
-    position: "relative",
-    flexGrow: 1,
-    '&:focus-within': {
-        color: theme.palette.primary.main,
-    },
-}))
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-    height: '100%',
-    position: 'absolute',
-    pointerEvents: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: theme.transitions.create("color"),
-}))
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-    color: theme.palette.common.white,
-    width: '100%',
-    '& .MuiInputBase-input': {
-        padding: theme.spacing(1, 1, 1, 0),
-        paddingLeft: `calc(1em + ${theme.spacing(2)})`,
-        width: '100%',
-    },
-}))
+import type {loader as settingsLoader} from "~/routes/settings";
+import type {loader as suggestionsLoader} from "~/routes/suggestions";
+import SearchField from "~/components/SearchField";
 
 export default function SearchBar (props: PropTypes) {
     const {search, onSearch} = props
-    const [query, setQuery] = useState(search.query ?? "")
     const [options, setOptions] = useState(false)
-    const fetcher = useFetcher<typeof loader>({key: "settings"})
+    const settingsFetcher = useFetcher<typeof settingsLoader>({key: "settings"})
 
     useEffect(() => {
-        if (fetcher.state === 'idle' && !fetcher.data) {
-            fetcher.load("/settings")
+        if (settingsFetcher.state === 'idle' && !settingsFetcher.data) {
+            settingsFetcher.load("/settings")
         }
-    }, [fetcher.state, fetcher.data, fetcher])
-
-    const updateQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setQuery(event.target.value)
-    }
+    }, [settingsFetcher.state, settingsFetcher.data, settingsFetcher])
 
     const updateOptions = (option: Partial<Omit<SearchQuery, "query">>) => {
-        console.log({
-            ...search,
-            ...option
-        })
         onSearch({
             ...search,
             ...option
         })
     }
 
+
     return (
         <AppBar position="static">
             <Toolbar>
-                <Search>
-                    <SearchIconWrapper>
-                        <SearchRounded />
-                    </SearchIconWrapper>
-                    <StyledInputBase
-                        placeholder="Search"
-                        value={query}
-                        onChange={updateQuery}
-                        onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                                event.preventDefault()
-                                onSearch({
-                                    ...search,
-                                    query
-                                })
-                            }
-                        }}
-                    />
-                </Search>
+                <SearchField search={search} onSearch={onSearch}/>
                 <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                     <IconButton size="large" color="inherit" onClick={() => {setOptions(!options)}}>
                         {(options)? <ExpandLessRounded/>: <ExpandMoreRounded/>}
@@ -141,10 +91,10 @@ export default function SearchBar (props: PropTypes) {
                                     updateOptions({rating: event.target.value as number})
                                 }}
                             >
-                                {fetcher.data?.ratings.map((value, index) => (
+                                {settingsFetcher.data?.ratings.map((value, index) => (
                                     <MenuItem key={index} value={index}>{value}</MenuItem>
                                 ))}
-                                <MenuItem value={fetcher.data?.ratings.length ?? 0}>All</MenuItem>
+                                <MenuItem value={settingsFetcher.data?.ratings.length ?? 0}>All</MenuItem>
                             </Select>
                         </FormControl>
                     </Grid>
