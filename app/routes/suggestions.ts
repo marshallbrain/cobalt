@@ -10,7 +10,7 @@ export async function loader({
     const from = params.get("from")
     const field = params.get("field")
 
-    if (!from) throw 400
+    if (!from && from !== "") throw 400
     if (!field) return json(Object.keys(fields)
         .filter(value => value.startsWith(from.substring(1)))
         .map(value => ({label: value})))
@@ -21,6 +21,11 @@ export async function loader({
 
 const fields = {
     "author": (from: string) => db.selectFrom("author")
-        .select("author_name as label")
-        .where("author_name", "ilike", from.concat("%")).execute()
+        .innerJoin("photos", "author.author_id", "photos.author_id")
+        .select(({ fn, val, ref }) =>
+            ["author_name as label", fn.countAll<number>().as("count")]
+        )
+        .groupBy("author_name")
+        .where("author_name", "ilike", from.concat("%"))
+        .orderBy("count", "desc").execute()
 }

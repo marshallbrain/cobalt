@@ -1,7 +1,7 @@
 import React, {ChangeEventHandler, SyntheticEvent, useEffect, useState} from 'react';
 import SearchRounded from "~/components/icons/SearchRounded";
 import {
-    Autocomplete,
+    Autocomplete, Badge, Box, Chip,
     InputBase,
     InputProps,
     ListItemText,
@@ -9,7 +9,7 @@ import {
     MenuList,
     Paper,
     Popover,
-    Popper,
+    Popper, PopperProps,
     styled,
     Typography
 } from "@mui/material";
@@ -49,9 +49,14 @@ const AutocompleteInput = styled(InputBase)(({ theme }) => ({
     },
 }))
 
-const AutocompletePaper = styled(Paper)(({ theme }) => ({
-    marginLeft: theme.spacing(2)
+const AutocompletePopper = styled(Popper)(({ theme }) => ({
+    marginLeft: theme.spacing(2) + " !important",
+    width: "fit-content !important"
 }))
+
+function PopperComponent(props: PopperProps) {
+    return <AutocompletePopper {...props} placement={"bottom-start"}/>;
+}
 
 const ExistingQuery = styled("span")(({ theme }) => ({
     color: theme.palette.text.disabled
@@ -69,7 +74,7 @@ export default function SearchField (props: PropTypes) {
     const {search, onSearch} = props
     const [query, setQuery] = useState(search.query ?? "")
     const [subquery, setSubquery] = useState<Subquery>({index: 0, from: ""})
-    const [suggestions, setSuggestions] = useState<{label: string}[]>([])
+    const [suggestions, setSuggestions] = useState<Suggestions[]>([])
     const [pendingFetch, setPendingFetch] = useState<string|undefined>(undefined)
     const suggestFetcher = useFetcher<typeof suggestionsLoader>()
 
@@ -78,21 +83,23 @@ export default function SearchField (props: PropTypes) {
         if (suggestFetcher.data) {
             setSuggestions(suggestFetcher.data)
         }
+        // console.log(pendingFetch, "-")
         if (pendingFetch) {
             const splitIndex = pendingFetch.lastIndexOf(":")
-            suggestFetcher.load("/suggestions?".concat(new URLSearchParams((splitIndex)?
+            suggestFetcher.load("/suggestions?".concat(new URLSearchParams((splitIndex >= 0)?
                 {from: pendingFetch.substring(0, splitIndex), field: pendingFetch.substring(splitIndex+1)}:
                 {from: pendingFetch}
             ).toString()))
             setPendingFetch(undefined)
         }
-    }, [pendingFetch, suggestFetcher])
+    }, [pendingFetch, subquery, suggestFetcher])
 
     const autoComplete = (event: SyntheticEvent<Element, Event>, value: string | {label: string} | null) => {
         if (!value) return
         const substring = query.substring(0, subquery.index)
             .replace(replaceFromRegex, (value as {label: string}).label)
 
+        setSuggestions([])
         setQuery(substring.concat(query.substring(subquery.index)))
     }
 
@@ -103,7 +110,8 @@ export default function SearchField (props: PropTypes) {
         const value = event.target.value.substring(0, event.target.selectionStart || 0)
         const fromValue = value.match(fromRegex)
         const fieldValue = value.match(fieldRegex)
-        if (!fromValue || !fromValue[0]) return setSuggestions([])
+
+        if (!fromValue) return setSuggestions([])
         if (fromValue[0].startsWith("$")) {
             setPendingFetch("$".concat(fromValue[1]))
             setSubquery({
@@ -116,8 +124,8 @@ export default function SearchField (props: PropTypes) {
         setPendingFetch(fromValue[1].concat(":", fieldValue[1]))
         setSubquery({
             index: event.target.selectionStart || 0,
-            from: value.substring(value.lastIndexOf(fieldValue[0]), value.lastIndexOf(fromValue[0])),
-            field: value.substring(0, value.lastIndexOf(fieldValue[0]))
+            from: value.substring(value.lastIndexOf("$" + fieldValue[1]), value.lastIndexOf(fromValue[1])),
+            field: value.substring(0, value.lastIndexOf("$" + fieldValue[1]))
         })
     }
 
@@ -133,8 +141,17 @@ export default function SearchField (props: PropTypes) {
                 value={{label: query || ""}}
                 inputValue={query}
                 onChange={autoComplete}
-                PaperComponent={AutocompletePaper}
+                PopperComponent={PopperComponent}
                 filterOptions={(x) => x}
+                renderOption={(props, option) => (
+                    <Box component="li" {...props}>
+                        <Chip label={option.label}/>
+                        {option.count && <>
+                            <Box sx={{pl: 2, flexGrow: 1}}/>
+                            <Typography variant="body2" color="text.secondary">{option.count}</Typography>
+                        </>}
+                    </Box>
+                )}
                 renderInput={(params) => (
                     <AutocompleteInput
                         ref={params.InputProps.ref}
@@ -142,7 +159,6 @@ export default function SearchField (props: PropTypes) {
                         placeholder="Search"
                         onChange={updateQuery(params.inputProps.onChange)}
                         onKeyDown={(event) => {if (event.key === "Enter") {
-                            console.log(suggestions.length == 0)
                             // if (suggestions.length == 0) onSearch({
                             //     ...search,
                             //     query
@@ -166,8 +182,8 @@ interface Subquery {
 }
 
 interface Suggestions {
-    from: string
-    values: {value: string}[]
+    label: string
+    count?: number
 }
 
 interface PropTypes {
