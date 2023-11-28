@@ -66,12 +66,12 @@ export default function App() {
             }}>
                 <Box sx={{
                     flexBasis: (drawer) ? 240 : theme.spacing(7),
-                    borderRight: "1px solid " + theme.palette.divider,
+                    minWidth: (drawer) ? 240 : theme.spacing(7),
                     overflow: 'hidden',
                     height: "100vh",
                     display: "flex",
                     flexDirection: "column",
-                    transition: theme.transitions.create("flex-basis", {
+                    transition: theme.transitions.create(["min-width", "flex-basis"], {
                         easing: theme.transitions.easing.sharp,
                         duration: theme.transitions.duration.enteringScreen,
                     })

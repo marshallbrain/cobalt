@@ -9,5 +9,5 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader() {
-  return redirect("/gallery")
+  return redirect("/view/138")
 }
