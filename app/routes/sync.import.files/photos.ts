@@ -5,8 +5,14 @@ import path from "path";
 import type {JsonData, Metadata} from "~/routes/sync.import.files/metadata";
 import {getMetadataStats, validateMetadataJson} from "~/routes/sync.import.files/metadata";
 import sharp from "sharp"
+import {DB} from "~/db/types";
 
-export default async function importPhoto(fileName: string, filePath: string, full: boolean) {
+export default async function importPhoto(
+    fileName: string,
+    filePath: string,
+    full: boolean,
+    settings: {ratingFav: number}
+) {
     let metadataLastUpdate: {modified_at: Date}[] | undefined
 
     const dupeId = await db.selectFrom("photos")
@@ -32,6 +38,8 @@ export default async function importPhoto(fileName: string, filePath: string, fu
     if (dataFile) {
         json = JSON.parse(await fs.readFile(path.join(filePath, dataFile), {encoding: 'utf8'}))
 
+        json = Object.fromEntries(Object.entries(json).map(([key, value]) => [key.toLowerCase(), value]))
+
         data = {
             name: dataFile,
             props: {
@@ -41,7 +49,11 @@ export default async function importPhoto(fileName: string, filePath: string, fu
         }
     }
 
-    const metadata = validateMetadataJson(json, fileName.replace(path.extname(fileName), ""))
+    const metadata = validateMetadataJson(
+        json,
+        fileName.replace(path.extname(fileName), ""),
+        settings.ratingFav
+    )
 
     if (dupeId.length > 0) {
         await updatePhotoEntry(
@@ -56,6 +68,10 @@ export default async function importPhoto(fileName: string, filePath: string, fu
 
     const photoStats = await fs.stat(path.join(filePath, fileName))
     const photoData = await sharp(path.join(filePath, fileName)).metadata()
+
+    if(!Date.parse(metadata.created_at)) {
+        metadata.created_at = photoStats.birthtime.toISOString()
+    }
 
     // generateThumbnails(path.join(fileName, filePath))
 
@@ -123,7 +139,7 @@ async function createPhotoEntry(
             ...values,
             photo_width: photo.width,
             photo_height: photo.height,
-            photo_type: photo.name,
+            photo_type: path.extname(photo.name),
             author_id: authorId,
             domain_id: domainId
         })

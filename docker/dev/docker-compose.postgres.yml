@@ -6,9 +6,15 @@ version: '3.5'
 services:
   postgres:
     image: postgres:12-alpine
+    container_name: postgres
     ports:
-      - "5432:5432" # database port (host:container)
+      - "5432:5432"
+    volumes:
+      - database:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: cobalt
       POSTGRES_USER: cobalt
       POSTGRES_PASSWORD: cobalt
+
+volumes:
+  database:

@@ -28,7 +28,7 @@ export type photos = {
     photo_height: number;
     photo_type: string;
     photo_name: string;
-    photo_rating: string;
+    photo_rating: number;
     photo_source: string;
     created_at: Timestamp;
     added_at: Generated<Timestamp>;
@@ -39,6 +39,8 @@ export type photos = {
 export type settings = {
     id: Generated<number>;
     theme: Generated<string>;
+    ratings: Generated<string[]>;
+    ratingFav: Generated<number>;
 };
 export type DB = {
     author: author;

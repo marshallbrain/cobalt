@@ -28,7 +28,7 @@ model photos {
   // photo_uuid    String
   photo_type    String
   photo_name    String
-  photo_rating  String
+  photo_rating  Int
   photo_source  String
 
   created_at    DateTime
@@ -59,8 +59,10 @@ model domain {
 }
 
 model settings {
-  id      Int     @id @default(autoincrement())
-  theme   String  @default("dark")
+  id        Int       @id @default(autoincrement())
+  theme     String    @default("dark")
+  ratings   String[]  @default(["General", "Hidden"])
+  ratingFav Int       @default(1)
 }
 
 generator kysely {

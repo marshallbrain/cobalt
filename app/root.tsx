@@ -6,12 +6,12 @@ import {
     Meta,
     Outlet,
     Scripts,
-    ScrollRestoration, useLoaderData,
+    ScrollRestoration, useFetcher, useLoaderData,
 } from "@remix-run/react";
-import type { ThemeOptions} from "@mui/material";
+import type {ThemeOptions} from "@mui/material";
 import {ThemeProvider, createTheme, CssBaseline, Box} from "@mui/material";
-import React, {useState} from "react";
-import MenuBar from "~/components/MenuBar";
+import React, {useEffect, useState} from "react";
+import SideMenu, {MenuLayout} from "~/components/SideMenu";
 import {db} from "~/db/database.server";
 import themes from "~/utils/themes";
 import {json} from "@remix-run/node";
@@ -23,17 +23,25 @@ export const links: LinksFunction = () => [
 export async function loader(
     {request}: LoaderFunctionArgs
 ) {
-    const theme = await db.selectFrom("settings")
-        .select("theme")
-        .limit(1)
-        .execute().then(r => r[0].theme)
+    const {theme} = await db.selectFrom("settings")
+        .select(["theme"])
+        .executeTakeFirstOrThrow().catch(() => {throw json("Not Found", {status: 404})})
 
-    return json(themes[(theme in themes)? theme: "dark"])
+    return json({
+        themeOptions: themes[(theme in themes) ? theme : "dark"]
+    })
 }
+
+const layout: MenuLayout[] = [
+    {text: "Gallery", url: "/gallery", icon: "insertPhoto"},
+    {text: "Sync", url: "/sync", icon: "sync"},
+    {text: "Settings", url: "/settings", icon: "settings"}
+]
 
 export default function App() {
     const [drawer, setDrawer] = useState(false)
-    const theme = createTheme(useLoaderData<typeof loader>() as ThemeOptions)
+    const {themeOptions} = useLoaderData<typeof loader>()
+    const theme = createTheme(themeOptions as ThemeOptions)
 
     const toggleDrawer = () => {
         setDrawer(!drawer)
@@ -42,24 +50,42 @@ export default function App() {
     return (
         <html lang="en">
         <head>
+            <title></title>
             <meta charSet="utf-8"/>
             <meta name="viewport" content="width=device-width, initial-scale=1"/>
             <Meta/>
             <Links/>
         </head>
         <body>
-            <ThemeProvider theme={theme}>
-                <CssBaseline/>
-                <MenuBar open={drawer} toggle={toggleDrawer}/>
-                <Box
-                    sx={{
-                        width: {sm: `calc(100% - ${drawer? "240px": theme.spacing(7)})`},
-                        ml: {sm: `${drawer? "240px": theme.spacing(7)}`},
-                    }}
-                >
+        <ThemeProvider theme={theme}>
+            <CssBaseline enableColorScheme/>
+            <Box sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "stretch"
+            }}>
+                <Box sx={{
+                    flexBasis: (drawer) ? 240 : theme.spacing(7),
+                    borderRight: "1px solid " + theme.palette.divider,
+                    overflow: 'hidden',
+                    height: "100vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    transition: theme.transitions.create("flex-basis", {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
+                    })
+                }}>
+                    <SideMenu open={drawer} toggle={toggleDrawer} layout={layout}/>
+                </Box>
+                <Box sx={{
+                    display: "block",
+                    flexGrow: 1
+                }}>
                     <Outlet/>
                 </Box>
-            </ThemeProvider>
+            </Box>
+        </ThemeProvider>
         <ScrollRestoration/>
         <Scripts/>
         <LiveReload/>

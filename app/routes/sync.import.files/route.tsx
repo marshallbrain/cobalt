@@ -6,6 +6,7 @@ import {readdir} from "fs/promises";
 import path from "path";
 import {originals} from "~/utils/utilities";
 import importPhoto, {isPhoto} from "~/routes/sync.import.files/photos";
+import {db} from "~/db/database.server";
 
 const importLogger = new EventEmitter()
 
@@ -31,13 +32,17 @@ export async function action({
     if (!originals) json({ok: false})
     readdir(
         path.join(originals ?? "", folder as string),
-        {withFileTypes: true}
+        {withFileTypes: true, recursive: true}
     ).then(async files => {
         files = files.filter(file => file.isFile() && isPhoto(file.name))
         const total = files.length
         let i = 0
+
+        const settings = await db.selectFrom("settings")
+            .select(["ratingFav"])
+            .executeTakeFirstOrThrow()
         for (const file of files) {
-            await importPhoto(file.name, file.path, (full === "true"))
+            await importPhoto(file.name, file.path, (full === "true"), settings)
             const progress = (++i) / total
             importLogger.emit("progress", file, Math.floor(progress * 100))
         }

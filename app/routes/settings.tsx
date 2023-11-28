@@ -2,10 +2,11 @@ import React from 'react';
 import type {ActionFunctionArgs, MetaFunction} from "@remix-run/node";
 import {Tab, Tabs} from "@mui/material";
 import {Link, Outlet, useLocation} from "@remix-run/react";
-import {json} from "@remix-run/node";
+import {json, LoaderFunctionArgs} from "@remix-run/node";
 import {db} from "~/db/database.server";
 import {validateSettings} from "~/validators/settings";
 import TabLinks from "~/components/TabLinks";
+import themes from "~/utils/themes";
 
 export const meta: MetaFunction = () => {
     return [
@@ -16,6 +17,16 @@ export const meta: MetaFunction = () => {
 const tabs = [
     {label: "General"}
 ]
+
+export async function loader(
+    {request}: LoaderFunctionArgs
+) {
+    const settings = await db.selectFrom("settings")
+        .select("ratings")
+        .executeTakeFirstOrThrow()
+
+    return json(settings)
+}
 
 export default function Settings() {
 
