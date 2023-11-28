@@ -89,7 +89,7 @@ const validFilters: {[index: string]: (values: string[]) => SelectQueryBuilder<D
         .where("domain_name", "like", values),
 }
 
-type Query =  SelectQueryBuilder<
+type Query = SelectQueryBuilder<
     DB,
     "photos" | "author" | "domain",
     {

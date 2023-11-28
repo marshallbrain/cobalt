@@ -77,8 +77,8 @@ export default function Gallery() {
                 }}
                 itemContent={(index, photo) => (
                     <Paper sx={{margin: 0.5}}>
-                        {/*<Img
-                            alt={""}
+                        <Img
+                            alt={photo.photo_name}
                             src={"/photo/".concat(
                                 photo.photo_id.toString(),
                                 ".jpg?",
@@ -87,7 +87,7 @@ export default function Gallery() {
                                 }).toString()
                             )}
                             loading="lazy"
-                        />*/}
+                        />
                         <Grid container sx={{p: 0.5, pr: 0, "& > *": {pr: 0.5}}}>
                             <Grid xs={12} >
                                 <Typography
