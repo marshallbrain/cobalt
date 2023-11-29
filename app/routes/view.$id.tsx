@@ -1,11 +1,11 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import type {LoaderFunctionArgs, MetaFunction} from "@remix-run/node";
 import {json} from "@remix-run/node";
 import type {Theme} from '@mui/material';
 import {
     AppBar,
-    Box,
-    Chip,
+    Box, Button,
+    Chip, IconButton,
     Paper,
     Slide,
     styled,
@@ -15,12 +15,14 @@ import {
     Typography
 } from '@mui/material';
 import {db} from "~/db/database.server";
-import {useLoaderData} from "@remix-run/react";
+import {Link, useLoaderData, useNavigate} from "@remix-run/react";
 import AspectRatioRounded from "~/components/icons/AspectRatioRounded";
 import FitScreenRounded from "~/components/icons/FitScreenRounded";
 import PhotoSizeLargeRounded from '~/components/icons/PhotoSizeLargeRounded';
 import type {IIdleTimerProps} from "react-idle-timer";
 import {useIdleTimer} from "react-idle-timer";
+import ChevronLeftRounded from "~/components/icons/ChevronLeftRounded";
+import ChevronRightRounded from '~/components/icons/ChevronRightRounded';
 
 export const meta: MetaFunction = () => {
     return [{title: "ViewId"}]
@@ -55,23 +57,37 @@ const ImageDiv = styled("div", {
     }
 }))
 
+const Header = styled(AppBar)(({theme}) => ({
+    backgroundColor: theme.palette.background.paper.concat("99"),
+}))
+
 const Footer = styled(Paper)(({theme}) => ({
     backgroundColor: theme.palette.background.paper.concat("99"),
     position: "fixed",
     zIndex: 1100,
-    bottom: 0,
-    left: "auto",
-    right: 0,
-    width: "100%",
     display: "flex",
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    padding: theme.spacing(1)
 }))
 
-const Header = styled(AppBar)(({theme}) => ({
-    backgroundColor: theme.palette.background.paper.concat("99"),
+const Navigation = styled("div")(({theme}) => ({
+    position: "fixed",
+    zIndex: 1100,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: theme.spacing(6),
+    "& .MuiButton-root": {
+        padding: theme.spacing(1.5) + " " + theme.spacing(0.5),
+        minWidth: 0,
+        backgroundColor: theme.palette.background.paper.concat("33"),
+        "& .MuiButton-endIcon": {
+            margin: 0,
+            padding: 0,
+        }
+    }
 }))
 
 export async function loader({
@@ -95,6 +111,26 @@ export default function ViewId() {
     const [photoSize, setPhotoSize] = useState<string>("fit")
     const [forceShow, setForceShow] = useState<{ [index in Elements]?: boolean }>({})
     const [show, setShow] = useState(true)
+    const navigate = useNavigate()
+    const prevImage = "/view/" + (photo.photo_id-1)
+    const nextImage = "/view/" + (photo.photo_id+1)
+
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            console.log("event")
+            switch (event.key) {
+                case "ArrowRight":
+                    navigate(nextImage)
+                    break
+                case "ArrowLeft":
+                    navigate(prevImage)
+                    break
+            }
+        }
+        document.addEventListener("keydown", onKeyDown)
+
+        return () => {document.removeEventListener("keydown", onKeyDown)}
+    }, [navigate, nextImage, prevImage])
 
     const handleAlignment = (event: React.MouseEvent<HTMLElement>, value: string | null,) => {
         if (value) setPhotoSize(value)
@@ -148,6 +184,13 @@ export default function ViewId() {
                 <Footer
                     onMouseEnter={shouldShow("title", true)}
                     onMouseLeave={shouldShow("title", false)}
+                    sx={{
+                        bottom: 0,
+                        left: "auto",
+                        right: 0,
+                        width: "100%",
+                        padding: 1
+                    }}
                 >
                     <Box sx={{visibility: "hidden"}}>
                         <Chip label={photo.author_name}/>
@@ -160,8 +203,36 @@ export default function ViewId() {
                     </Box>
                 </Footer>
             </Slide>
-            <ImageDiv zoom={photoSize} aspect={{photo_width: photo.photo_width, photo_height: photo.photo_height}}>
+            <Slide appear={false} direction="right" in={show}>
+                <Navigation sx={{height: "100vh", left: 0}}>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        endIcon={<ChevronLeftRounded/>}
+                        color="secondary"
+                        component={Link}
+                        to={prevImage}
+                    />
+                </Navigation>
+            </Slide>
+            <Slide appear={false} direction="left" in={show}>
+                <Navigation sx={{height: "100vh", right: 0}}>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        endIcon={<ChevronRightRounded/>}
+                        color="secondary"
+                        component={Link}
+                        to={nextImage}
+                    />
+                </Navigation>
+            </Slide>
+            <ImageDiv
+                zoom={photoSize}
+                aspect={{photo_width: photo.photo_width, photo_height: photo.photo_height}}
+            >
                 <img
+                    loading="lazy"
                     alt={photo.photo_name}
                     src={"/photo/".concat(
                         photo.photo_id.toString(),
@@ -172,7 +243,6 @@ export default function ViewId() {
                             h: photo.photo_height.toString()
                         }).toString()
                     )}
-                    loading="lazy"
                 />
             </ImageDiv>
         </>
