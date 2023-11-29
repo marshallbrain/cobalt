@@ -38,6 +38,10 @@ const layout: MenuLayout[] = [
     {text: "Settings", url: "/settings", icon: "settings"}
 ]
 
+const hidMenu = [
+    {url: "/view"}
+]
+
 export default function App() {
     const [drawer, setDrawer] = useState(false)
     const {themeOptions} = useLoaderData<typeof loader>()
@@ -64,20 +68,7 @@ export default function App() {
                 flexDirection: "row",
                 alignItems: "stretch"
             }}>
-                <Box sx={{
-                    flexBasis: (drawer) ? 240 : theme.spacing(7),
-                    minWidth: (drawer) ? 240 : theme.spacing(7),
-                    overflow: 'hidden',
-                    height: "100vh",
-                    display: "flex",
-                    flexDirection: "column",
-                    transition: theme.transitions.create(["min-width", "flex-basis"], {
-                        easing: theme.transitions.easing.sharp,
-                        duration: theme.transitions.duration.enteringScreen,
-                    })
-                }}>
-                    <SideMenu open={drawer} toggle={toggleDrawer} layout={layout}/>
-                </Box>
+                <SideMenu open={drawer} toggle={toggleDrawer} layout={layout} hidden={hidMenu}/>
                 <Box sx={{
                     display: "block",
                     flexGrow: 1
