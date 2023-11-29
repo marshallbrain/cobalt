@@ -70,6 +70,10 @@ const Footer = styled(Paper)(({theme}) => ({
     padding: theme.spacing(1)
 }))
 
+const Header = styled(AppBar)(({theme}) => ({
+    backgroundColor: theme.palette.background.paper.concat("99"),
+}))
+
 export async function loader({
     request, params
 }: LoaderFunctionArgs) {
@@ -107,6 +111,7 @@ export default function ViewId() {
         onActive: () => {
             setShow(true)
         },
+        events: ["mousemove"],
         timeout: 3_000,
         throttle: 500
     }
@@ -115,7 +120,7 @@ export default function ViewId() {
     return (
         <>
             <Slide appear={false} direction="down" in={show || forceShow.appBar}>
-                <AppBar
+                <Header
                     onMouseEnter={shouldShow("appBar", true)}
                     onMouseLeave={shouldShow("appBar", false)}
                 >
@@ -137,17 +142,22 @@ export default function ViewId() {
                             </ToggleButton>
                         </ToggleButtonGroup>
                     </Toolbar>
-                </AppBar>
+                </Header>
             </Slide>
             <Slide appear={false} direction="up" in={show || forceShow.appBar}>
                 <Footer
                     onMouseEnter={shouldShow("title", true)}
                     onMouseLeave={shouldShow("title", false)}
                 >
-                    <Typography variant="h6" component="div" sx={{pr: 2}}>
+                    <Box sx={{visibility: "hidden"}}>
+                        <Chip label={photo.author_name}/>
+                    </Box>
+                    <Typography variant="h6" component="div" sx={{px: 2}}>
                         {photo.photo_name}
                     </Typography>
-                    <Chip label={photo.author_name}/>
+                    <Box>
+                        <Chip label={photo.author_name}/>
+                    </Box>
                 </Footer>
             </Slide>
             <ImageDiv zoom={photoSize} aspect={{photo_width: photo.photo_width, photo_height: photo.photo_height}}>

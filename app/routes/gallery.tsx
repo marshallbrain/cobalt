@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import SearchBar from "~/components/SearchBar";
-import {useFetcher, useSearchParams, useSubmit} from "@remix-run/react";
+import {Link, useFetcher, useSearchParams, useSubmit} from "@remix-run/react";
 import { VirtuosoGrid } from 'react-virtuoso';
 import {Chip, Unstable_Grid2 as Grid, Paper, Stack, Typography, styled} from "@mui/material";
 import type {loader} from "~/routes/search";
@@ -77,17 +77,19 @@ export default function Gallery() {
                 }}
                 itemContent={(index, photo) => (
                     <Paper sx={{margin: 0.5}}>
-                        <Img
-                            alt={photo.photo_name}
-                            src={"/photo/".concat(
-                                photo.photo_id.toString(),
-                                ".jpg?",
-                                new URLSearchParams({
-                                    w: "500",
-                                }).toString()
-                            )}
-                            loading="lazy"
-                        />
+                        <Link to={"/view/" + photo.photo_id}>
+                            <Img
+                                alt={photo.photo_name}
+                                src={"/photo/".concat(
+                                    photo.photo_id.toString(),
+                                    ".jpg?",
+                                    new URLSearchParams({
+                                        w: "500",
+                                    }).toString()
+                                )}
+                                loading="lazy"
+                            />
+                        </Link>
                         <Grid container sx={{p: 0.5, pr: 0, "& > *": {pr: 0.5}}}>
                             <Grid xs={12} >
                                 <Typography
