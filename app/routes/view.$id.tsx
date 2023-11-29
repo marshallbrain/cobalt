@@ -59,7 +59,7 @@ export default function ViewId() {
                         value={photoSize}
                         onChange={handleAlignment}
                     >
-                        <ToggleButton value="zoom" disabled>
+                        <ToggleButton value="zoom">
                             <PhotoSizeLargeRounded/>
                         </ToggleButton>
                         <ToggleButton value="fill">
@@ -88,7 +88,17 @@ export default function ViewId() {
                         maxHeight: "calc(100vh - 64px)",
                         maxWidth: "100%",
                         ...(photoSize !== "fit" && {flexGrow: 1}),
-                        objectFit: "contain"
+                        objectFit: "contain",
+                        ...(photoSize == "zoom" && {
+                            "@media (min-aspect-ratio: 0)": {
+                                minHeight: "calc(100vh - 64px)",
+                                maxWidth: "none",
+                            },
+                            [`@media (min-aspect-ratio: ${photo.photo_width}/${photo.photo_height})`]: {
+                                maxHeight: "100%",
+                                maxWidth: "100%",
+                            },
+                        })
                     }
                 }}>
                     <Img
