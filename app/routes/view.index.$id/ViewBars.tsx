@@ -3,7 +3,7 @@ import {
     AppBar,
     Box,
     Button,
-    Chip, Paper,
+    Chip, IconButton, Paper,
     Slide,
     styled,
     ToggleButton,
@@ -15,9 +15,9 @@ import PhotoSizeLargeRounded from "~/components/icons/PhotoSizeLargeRounded";
 import FitScreenRounded from "~/components/icons/FitScreenRounded";
 import AspectRatioRounded from "~/components/icons/AspectRatioRounded";
 import ChevronLeftRounded from "~/components/icons/ChevronLeftRounded";
-import {Link} from "@remix-run/react";
+import {Link, useSearchParams} from "@remix-run/react";
 import ChevronRightRounded from "~/components/icons/ChevronRightRounded";
-import {PhotoZoom} from "~/routes/view.index.$id/route";
+import type {PhotoZoom} from "~/routes/view.index.$id/route";
 
 const Header = styled(AppBar)(({theme}) => ({
     backgroundColor: theme.palette.background.paper.concat("99"),
@@ -53,6 +53,7 @@ const Navigation = styled("div")(({theme}) => ({
 }))
 
 export default function ViewBars(props: PropTypes) {
+    const [searchParams] = useSearchParams()
     const {photo, show, prevImage, nextImage, photoZoom, setPhotoZoom} = props
     const [forceShow, setForceShow] = useState<{ [index in Elements]?: boolean }>({})
 
@@ -71,6 +72,9 @@ export default function ViewBars(props: PropTypes) {
                 onMouseLeave={shouldShow("appBar", false)}
             >
                 <Toolbar>
+                    <IconButton component={Link} to={"/gallery/?" + searchParams}>
+                        <ChevronLeftRounded/>
+                    </IconButton>
                     <Box sx={{flexGrow: 1}}/>
                     <ToggleButtonGroup
                         exclusive
