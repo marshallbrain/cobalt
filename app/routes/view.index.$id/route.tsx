@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import type {MetaFunction, LoaderFunctionArgs} from "@remix-run/node";
-import ViewBars from "~/routes/view.$id/ViewBars";
-import {useLoaderData, useNavigate} from "@remix-run/react";
+import ViewBars from "~/routes/view.index.$id/ViewBars";
+import {useLoaderData, useNavigate, useParams, useSearchParams} from "@remix-run/react";
 import {json} from "@remix-run/node";
-import {db} from "~/db/database.server";
 import type {IIdleTimerProps} from "react-idle-timer";
 import { useIdleTimer} from "react-idle-timer";
-import {styled} from "@mui/material";
-import ViewImage from "~/routes/view.$id/ViewImage";
+import ViewImage from "~/routes/view.index.$id/ViewImage";
+import {searchPhotos} from "~/db/searchPhotos.server";
+import {db} from "~/db/database.server";
 
 export const meta: MetaFunction = () => {
     return [{title: "Route"}]
@@ -16,25 +16,40 @@ export const meta: MetaFunction = () => {
 export async function loader({
     request, params
 }: LoaderFunctionArgs) {
-    const photoId = parseInt(params.id ?? "")
-    if (isNaN(photoId)) throw 400
+    const search = new URL(request.url).searchParams
+    const index = parseInt(params.id ?? "")
+    if (isNaN(index) || index < 0) throw 404
 
-    const photoData = await db.selectFrom("photos")
-        .innerJoin("author", "author.author_id", "photos.author_id")
-        .select(["photo_name", "photo_type", "photo_width", "photo_height", "author_name"])
-        .where("photo_id", "=", photoId).executeTakeFirstOrThrow(() => {
-            throw 404
-        })
+    const photo = await searchPhotos({
+        query: search.get("query") ?? "",
+        rating: parseInt(search.get("rating") ?? "0"),
+        sort: search.get("sort") ?? "name",
+        order: search.has("order", "true") ?? false,
+        offset: index,
+        limit: 2,
+    }).execute()
 
-    return json({photo_id: photoId, ...photoData})
+    if (!photo[0]) throw 404
+
+    return json({
+        prev: index-1 >= 0,
+        next: photo.length > 1,
+        photo_id: photo[0].photo_id,
+        ...await db.selectFrom("photos")
+            .innerJoin("author", "author.author_id", "photos.author_id")
+            .select(["photo_name", "photo_type", "photo_width", "photo_height", "author_name"])
+            .where("photo_id", "=", photo[0].photo_id).executeTakeFirstOrThrow()
+    })
 }
 
 export default function Route() {
     const photo = useLoaderData<typeof loader>()
+    const searchIndex = parseInt(useParams().id ?? "")
+    const [searchParams] = useSearchParams()
     const [photoZoom, setPhotoZoom] = useState<PhotoZoom>("fit")
     const [show, setShow] = useState(true)
-    const prevImage = "/view/" + (photo.photo_id-1)
-    const nextImage = "/view/" + (photo.photo_id+1)
+    const prevImage = photo.prev && "/view/index/" + (searchIndex-1) + "?" + searchParams
+    const nextImage = photo.next && "/view/index/" + (searchIndex+1) + "?" + searchParams
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -42,10 +57,10 @@ export default function Route() {
             if (event.repeat) return
             switch (event.key) {
                 case "ArrowRight":
-                    navigate(nextImage)
+                    if (nextImage) navigate(nextImage)
                     break
                 case "ArrowLeft":
-                    navigate(prevImage)
+                    if (prevImage) navigate(prevImage)
                     break
             }
         }

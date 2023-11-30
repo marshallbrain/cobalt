@@ -17,7 +17,7 @@ import AspectRatioRounded from "~/components/icons/AspectRatioRounded";
 import ChevronLeftRounded from "~/components/icons/ChevronLeftRounded";
 import {Link} from "@remix-run/react";
 import ChevronRightRounded from "~/components/icons/ChevronRightRounded";
-import {PhotoZoom} from "~/routes/view.$id/route";
+import {PhotoZoom} from "~/routes/view.index.$id/route";
 
 const Header = styled(AppBar)(({theme}) => ({
     backgroundColor: theme.palette.background.paper.concat("99"),
@@ -90,7 +90,7 @@ export default function ViewBars(props: PropTypes) {
                 </Toolbar>
             </Header>
         </Slide>
-        <Slide appear={false} direction="up" in={show || forceShow.appBar}>
+        <Slide appear={false} direction="up" in={show || forceShow.title}>
             <Footer
                 onMouseEnter={shouldShow("title", true)}
                 onMouseLeave={shouldShow("title", false)}
@@ -116,24 +116,26 @@ export default function ViewBars(props: PropTypes) {
         <Slide appear={false} direction="right" in={show}>
             <Navigation sx={{height: "100vh", left: 0}}>
                 <Button
+                    disabled={!prevImage}
                     variant="outlined"
                     size="small"
                     endIcon={<ChevronLeftRounded/>}
                     color="secondary"
                     component={Link}
-                    to={prevImage}
+                    to={prevImage || ""}
                 />
             </Navigation>
         </Slide>
         <Slide appear={false} direction="left" in={show}>
             <Navigation sx={{height: "100vh", right: 0}}>
                 <Button
+                    disabled={!nextImage}
                     variant="outlined"
                     size="small"
                     endIcon={<ChevronRightRounded/>}
                     color="secondary"
                     component={Link}
-                    to={nextImage}
+                    to={nextImage || ""}
                 />
             </Navigation>
         </Slide>
@@ -145,8 +147,8 @@ type Elements = "appBar" | "title"
 interface PropTypes {
     photo: {photo_name: string, author_name: string}
     show: boolean
-    nextImage: string
-    prevImage: string
+    nextImage: string | false
+    prevImage: string | false
     photoZoom: PhotoZoom
     setPhotoZoom: (value: PhotoZoom) => void
 }

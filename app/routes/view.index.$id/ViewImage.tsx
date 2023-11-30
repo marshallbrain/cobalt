@@ -1,6 +1,6 @@
 import React from 'react';
 import {styled} from "@mui/material";
-import {PhotoZoom} from "~/routes/view.$id/route";
+import {PhotoZoom} from "~/routes/view.index.$id/route";
 
 const ImageDiv = styled("div", {
     shouldForwardProp: (prop) => prop !== 'zoom' && prop !== 'aspect'

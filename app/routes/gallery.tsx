@@ -77,7 +77,7 @@ export default function Gallery() {
                 }}
                 itemContent={(index, photo) => (
                     <Paper sx={{margin: 0.5}}>
-                        <Link to={"/view/" + photo.photo_id}>
+                        <Link to={"/view/index/" + index + "?" + search}>
                             <Img
                                 alt={photo.photo_name}
                                 src={"/photo/".concat(
